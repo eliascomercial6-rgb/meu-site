@@ -1,0 +1,6 @@
+{
+  "name": "Portfólio de Fotografia Premium",
+  "description": "Plataforma SaaS premium de portfólios de fotografia com painel de controle administrativo completo.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,281 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Playfair Display", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+/* App-wide accent used across the SaaS landing page + admin panel (Backlog-inspired) */
+:root {
+  --app-accent: #E7E9EC;
+  --app-accent-dim: #9AA0AA;
+  --app-accent-ink: #12141A;
+  --app-accent-rgb: 231, 233, 236;
+  --app-accent-gradient: linear-gradient(135deg, #8A8F99 0%, #F4F5F7 30%, #FFFFFF 50%, #F4F5F7 70%, #8A8F99 100%);
+}
+
+/* Custom CSS variables for the public view */
+:root {
+  --pub-bg: #070708;
+  --pub-bg-elevated: #0E0F11;
+  --pub-surface: #15171A;
+  --pub-border: rgba(255, 255, 255, 0.05);
+  --pub-border-strong: rgba(255, 255, 255, 0.12);
+  --pub-glass-bg: rgba(7, 7, 8, 0.75);
+  --pub-ink: #F3F4F6;
+  --pub-ink-muted: #7C8390;
+  --pub-accent: #E2E8F0; /* Platinum Silver */
+  --pub-accent-hover: #FFFFFF; /* Brighter Platinum */
+  --pub-accent-light: #F1F5F9;
+  --pub-accent-ink: #0F172A; /* Slate 900 for dark text contrast */
+  --pub-accent-rgb: 226, 232, 240;
+}
+
+.light-mode {
+  --pub-bg: #FAF9F6;
+  --pub-bg-elevated: #F2F1EC;
+  --pub-surface: #FFFFFF;
+  --pub-border: rgba(0, 0, 0, 0.06);
+  --pub-border-strong: rgba(0, 0, 0, 0.14);
+  --pub-glass-bg: rgba(250, 249, 246, 0.85);
+  --pub-ink: #1F2937;
+  --pub-ink-muted: #545B68;
+  --pub-accent: #475569; /* Slate/Silver Gray */
+  --pub-accent-hover: #1E293B;
+  --pub-accent-light: #F1F5F9;
+  --pub-accent-ink: #FFFFFF;
+  --pub-accent-rgb: 71, 85, 105;
+}
+
+/* Scrollbar customizations */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 99px;
+}
+.light-mode ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--pub-accent, #CBD5E1);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-scale-up {
+  animation: scaleUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Base public section layout */
+.pub-section {
+  position: relative;
+  padding-top: 7rem;
+  padding-bottom: 7rem;
+}
+
+.pub-container {
+  max-width: 80rem; /* 1280px */
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+.pub-section__eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
+  text-transform: none;
+  color: var(--pub-accent, #CBD5E1);
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.pub-section__title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.75rem; /* refined from 2.25rem */
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  margin-bottom: 3rem;
+  line-height: 1.25;
+}
+
+@media (min-width: 768px) {
+  .pub-section__title {
+    font-size: 2.5rem; /* refined from 3.25rem */
+  }
+}
+
+/* Beautiful buttons */
+.pub-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.75rem;
+  border-radius: 9999px;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0.01em;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  outline: none;
+}
+
+.pub-btn-primary {
+  background: linear-gradient(135deg, var(--pub-accent, #E2E8F0) 0%, var(--pub-accent-hover, #FFFFFF) 50%, var(--pub-accent, #E2E8F0) 100%);
+  background-size: 200% 100%;
+  background-position: 0% 0%;
+  color: var(--pub-accent-ink, #0F172A);
+  border: 1px solid var(--pub-accent, #E2E8F0);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.5), 0 4px 14px -4px rgba(var(--pub-accent-rgb, 226,232,240), 0.3);
+}
+
+.pub-btn-primary:hover {
+  background-position: 100% 0%;
+  border-color: var(--pub-accent-hover, #FFFFFF);
+  transform: translateY(-2px);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.6), 0 16px 32px -10px rgba(var(--pub-accent-rgb, 226, 232, 240), 0.4);
+}
+
+.pub-btn-primary:active {
+  transform: translateY(0);
+}
+
+.pub-btn-outline {
+  border: 1px solid var(--pub-border-strong);
+  color: var(--pub-ink);
+  background-color: transparent;
+}
+
+.pub-btn-outline:hover {
+  border-color: var(--pub-accent, #E2E8F0);
+  background-color: rgba(var(--pub-accent-rgb, 226, 232, 240), 0.04);
+  transform: translateY(-2px);
+}
+
+.pub-btn-outline:active {
+  transform: translateY(0);
+}
+
+/* Premium accents: pulsing badge dot + signature horizon glow, driven by the photographer's own accent color */
+.pub-badge-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background-color: var(--pub-accent, #CBD5E1);
+  box-shadow: 0 0 10px 1px rgba(var(--pub-accent-rgb, 226, 232, 240), 0.8);
+}
+
+.pub-glow-arc {
+  background: radial-gradient(ellipse 60% 100% at 50% 100%, rgba(var(--pub-accent-rgb, 226, 232, 240), 0.14), transparent 70%);
+}
+
+.pub-portrait-glow {
+  background: radial-gradient(circle at 50% 40%, rgba(var(--pub-accent-rgb, 226, 232, 240), 0.25), transparent 65%);
+  filter: blur(40px);
+}
+
+/* Custom Glass card effect */
+.glass-card {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.3);
+}
+
+.light-mode .glass-card {
+  background: rgba(0, 0, 0, 0.02);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05);
+}
+
+/* ---- App theme (SaaS landing + Admin panel) — brilliant silver/chrome accent on black ---- */
+
+.app-btn-accent {
+  background: var(--app-accent-gradient);
+  background-size: 200% 100%;
+  background-position: 0% 0%;
+  color: var(--app-accent-ink);
+  box-shadow: 0 8px 24px -8px rgba(20, 20, 22, 0.5), inset 0 1px 1px rgba(255,255,255,0.6);
+  transition: background-position 0.5s ease, filter 0.2s ease;
+}
+.app-btn-accent:hover {
+  background-position: 100% 0%;
+  filter: brightness(1.04);
+}
+
+.app-badge-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background-color: var(--app-accent);
+  box-shadow: 0 0 8px 1px rgba(var(--app-accent-rgb), 0.7);
+}
+
+/* Soft horizon glow used behind hero art / featured cards */
+.app-horizon-glow {
+  background: radial-gradient(ellipse 60% 100% at 50% 100%, rgba(var(--app-accent-rgb), 0.16), transparent 70%);
+}
+
+.app-focus:focus {
+  border-color: var(--app-accent) !important;
+}
+
+/* Reusable "brilliant silver" polish for admin cards/panels: a faint chrome
+   hairline on top + a metallic glow border on hover. Applied across the
+   Dashboard/Workspace so the accent language is consistent everywhere. */
+.chrome-hairline-top {
+  position: relative;
+}
+.chrome-hairline-top::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(var(--app-accent-rgb), 0.55) 50%, transparent 100%);
+  pointer-events: none;
+}
+
+.chrome-card-hover {
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+.chrome-card-hover:hover {
+  border-color: rgba(var(--app-accent-rgb), 0.28);
+  box-shadow: 0 12px 30px -12px rgba(var(--app-accent-rgb), 0.18), inset 0 1px 1px rgba(255,255,255,0.04);
+  transform: translateY(-1px);
+}
+
+/* Ambient chrome glow used behind the admin workspace content area */
+.app-workspace-glow {
+  background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(var(--app-accent-rgb), 0.05), transparent 70%);
+}
