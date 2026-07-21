@@ -202,7 +202,7 @@ export default function Login({ initialMode = 'login', onLoginSuccess, onNavigat
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#050506] text-neutral-100 font-sans p-6 relative">
       {/* Decorative premium silver subtle lighting */}
-      <div className="absolute top-[20%] left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-zinc-700/[0.03] blur-[120px] pointer-events-none" />
+      <div className="absolute top-[20%] left-1/2 -translate-x-1/2 w-[420px] h-[420px] rounded-full bg-zinc-700/[0.018] blur-[130px] pointer-events-none" />
 
       <div className="w-full max-w-md rounded-3xl border border-zinc-900 bg-neutral-950/90 p-8 md:p-10 shadow-2xl backdrop-blur-xl relative overflow-hidden">
         {/* Brand Header */}

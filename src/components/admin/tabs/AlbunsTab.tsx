@@ -6,7 +6,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { Album, Category, Photo } from '../../../types';
-import { Plus, X, Pencil, Trash, Sparkles, FolderHeart, Image as ImageIcon, Check } from 'lucide-react';
+import { Plus, X, Pencil, Trash, Sparkles, FolderHeart, Image as ImageIcon, Check, Upload } from 'lucide-react';
 
 interface AlbunsTabProps {
   userId: string;
@@ -39,6 +39,8 @@ export default function AlbunsTab({ userId, onShowToast }: AlbunsTabProps) {
   const [organizerAlbum, setOrganizerAlbum] = useState<Album | null>(null);
   const [albumPhotos, setAlbumPhotos] = useState<Photo[]>([]);
   const [unlinkedPhotos, setUnlinkedPhotos] = useState<Photo[]>([]);
+  const [organizerUploading, setOrganizerUploading] = useState(false);
+  const [organizerUploadProgress, setOrganizerUploadProgress] = useState('');
 
   const loadData = async () => {
     try {
@@ -248,13 +250,136 @@ export default function AlbunsTab({ userId, onShowToast }: AlbunsTabProps) {
     }
   };
 
+  // Direct upload straight into the album being organized — skips the old
+  // "upload in Fotos tab, then link one by one" flow entirely.
+  function generateUUID(): string {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  }
+
+  const resizeAndCompress = (file: File, maxDimension: number, quality: number): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(img.src);
+        let { width, height } = img;
+        if (width > maxDimension || height > maxDimension) {
+          if (width >= height) {
+            height = Math.round(height * (maxDimension / width));
+            width = maxDimension;
+          } else {
+            width = Math.round(width * (maxDimension / height));
+            height = maxDimension;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error('Canvas conversion failed'));
+          }, 'image/jpeg', quality);
+        } else {
+          reject(new Error('Canvas context unavailable'));
+        }
+      };
+      img.onerror = () => reject(new Error('Image reading failed'));
+    });
+  };
+
+  const handleDirectUploadToAlbum = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []) as File[];
+    if (files.length === 0 || !organizerAlbum) return;
+
+    setOrganizerUploading(true);
+    let successCount = 0;
+    let failCount = 0;
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      setOrganizerUploadProgress(`Enviando ${i + 1} de ${files.length}...`);
+      try {
+        const originalBlob = await resizeAndCompress(file, 2000, 0.82);
+        const thumbBlob = await resizeAndCompress(file, 800, 0.85);
+
+        const filename = `${generateUUID()}.jpg`;
+        const originalPath = `${userId}/${filename}`;
+        const thumbPath = `${userId}/thumb_${filename}`;
+
+        const { error: uploadOrigError } = await supabase.storage
+          .from('photos')
+          .upload(originalPath, originalBlob, { contentType: 'image/jpeg', upsert: false });
+        if (uploadOrigError) throw uploadOrigError;
+
+        const { error: uploadThumbError } = await supabase.storage
+          .from('photos')
+          .upload(thumbPath, thumbBlob, { contentType: 'image/jpeg', upsert: false });
+        if (uploadThumbError) {
+          await supabase.storage.from('photos').remove([originalPath]);
+          throw uploadThumbError;
+        }
+
+        const origUrl = supabase.storage.from('photos').getPublicUrl(originalPath).data.publicUrl;
+        const thumbUrl = supabase.storage.from('photos').getPublicUrl(thumbPath).data.publicUrl;
+
+        const { error: dbError } = await supabase
+          .from('photos')
+          .insert({
+            photographer_id: userId,
+            album_id: organizerAlbum.id,
+            category_id: organizerAlbum.category_id || null,
+            title: file.name.replace(/\.[^.]+$/, ''),
+            description: '',
+            image_url: origUrl,
+            thumbnail_url: thumbUrl,
+            storage_path: originalPath,
+            file_size_bytes: originalBlob.size,
+            is_published: true
+          });
+
+        if (dbError) {
+          await supabase.storage.from('photos').remove([originalPath, thumbPath]);
+          throw dbError;
+        }
+        successCount++;
+      } catch (err) {
+        console.error('Error uploading photo directly to album:', err);
+        failCount++;
+      }
+    }
+
+    setOrganizerUploading(false);
+    setOrganizerUploadProgress('');
+    e.target.value = '';
+
+    if (successCount > 0) {
+      await refreshOrganizerPhotos(organizerAlbum.id);
+      loadData();
+    }
+    if (failCount > 0) {
+      onShowToast(`${successCount} fotos enviadas direto para o álbum. ${failCount} falharam.`, true);
+    } else if (successCount > 0) {
+      onShowToast(`${successCount} ${successCount === 1 ? 'foto enviada' : 'fotos enviadas'} direto para o álbum.`);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-display italic text-white font-medium">Álbuns Editoriais</h2>
         <button 
           onClick={() => handleOpenModal()}
-          className="px-4 py-2 rounded-xl text-xs font-semibold text-zinc-950 bg-gradient-to-b from-white via-zinc-200 to-zinc-300 hover:from-white hover:via-zinc-100 hover:to-zinc-200 border border-zinc-400/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6),0_1.5px_3px_rgba(0,0,0,0.15)] transition-all duration-200 flex items-center gap-1.5 cursor-pointer"
+          className="app-btn-accent px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5 text-zinc-950" /> Novo Álbum
         </button>
@@ -507,12 +632,27 @@ export default function AlbunsTab({ userId, onShowToast }: AlbunsTabProps) {
               <X className="w-5 h-5" />
             </button>
 
-            <div>
-              <p className="text-xs text-zinc-400 font-medium tracking-wide mb-2">Gerenciador de fotos</p>
-              <h3 className="font-display italic text-3xl text-white mb-2">{organizerAlbum.title}</h3>
-              <p className="text-neutral-400 text-xs max-w-xl leading-relaxed">
-                Adicione fotos do seu acervo geral a este álbum ou remova as vinculadas atualmente sem excluí-las do acervo.
-              </p>
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <p className="text-xs text-zinc-400 font-medium tracking-wide mb-2">Gerenciador de fotos</p>
+                <h3 className="font-display italic text-3xl text-white mb-2">{organizerAlbum.title}</h3>
+                <p className="text-neutral-400 text-xs max-w-xl leading-relaxed">
+                  Envie fotos novas direto para este álbum, ou adicione fotos que já estão no seu acervo geral.
+                </p>
+              </div>
+
+              <label className={`app-btn-accent px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 shrink-0 cursor-pointer ${organizerUploading ? 'opacity-60 pointer-events-none' : ''}`}>
+                <Upload className="w-3.5 h-3.5" />
+                {organizerUploading ? (organizerUploadProgress || 'Enviando...') : 'Enviar Fotos para este Álbum'}
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  multiple 
+                  className="hidden" 
+                  disabled={organizerUploading}
+                  onChange={handleDirectUploadToAlbum}
+                />
+              </label>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 flex-1 overflow-hidden my-6">

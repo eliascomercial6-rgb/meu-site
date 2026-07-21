@@ -173,15 +173,14 @@ export default function DashboardTab({ userId, photographerName, onTabChange }: 
   const linePath = points.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
   const areaPath = `${linePath} L ${points[points.length - 1].x} ${paddingY + chartHeight} L ${points[0].x} ${paddingY + chartHeight} Z`;
 
-  // Group photos by categories for visual progress bar breakdown
+  // Group photos by categories for visual progress bar breakdown — real counts only
   const categoryStats = categories.map(cat => {
-    // Total photos in this category
-    const count = recentPhotos.filter(p => p.category_id === cat.id).length + (cat.name === 'Retrato' ? 8 : cat.name === 'Casamento' ? 12 : 5);
+    const count = allPhotos.filter(p => p.category_id === cat.id).length;
     return {
       name: cat.name,
       count
     };
-  }).sort((a, b) => b.count - a.count).slice(0, 4);
+  }).filter(c => c.count > 0).sort((a, b) => b.count - a.count).slice(0, 4);
 
   const totalCatPhotos = categoryStats.reduce((sum, item) => sum + item.count, 0) || 1;
 
@@ -206,7 +205,7 @@ export default function DashboardTab({ userId, photographerName, onTabChange }: 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 shadow-[0_0_5px_rgba(255,255,255,0.45)]" />
               <span className="text-[10px] font-sans uppercase text-zinc-400 font-semibold tracking-widest">Ambiente de Gestão Autoral</span>
             </div>
             <h2 className="text-2xl md:text-3xl font-display italic text-white font-medium">Seja bem-vindo de volta, {photographerName}!</h2>
@@ -366,7 +365,7 @@ export default function DashboardTab({ userId, photographerName, onTabChange }: 
             <div className="w-full h-1.5 rounded-full bg-neutral-900 overflow-hidden mb-1">
               <div 
                 className={`h-full transition-all duration-300 ${percentUsed >= 90 ? 'bg-red-500/80' : percentUsed >= 75 ? 'bg-zinc-400' : 'bg-white'}`}
-                style={{ width: `${Math.max(3, Math.min(100, percentUsed))}%` }}
+                style={{ width: `${percentUsed <= 0 ? 0 : Math.max(1.5, Math.min(100, percentUsed))}%` }}
               />
             </div>
             <div className="flex justify-between text-[9px] font-sans text-neutral-500">
@@ -479,7 +478,11 @@ export default function DashboardTab({ userId, photographerName, onTabChange }: 
           {categoryStats.length === 0 ? (
             <div className="h-[180px] flex flex-col justify-center items-center text-center p-4">
               <Info className="w-8 h-8 text-neutral-600 mb-2" />
-              <p className="text-xs text-neutral-500 font-sans">Crie categorias para visualizar a distribuição.</p>
+              <p className="text-xs text-neutral-500 font-sans">
+                {categories.length === 0
+                  ? 'Crie categorias para visualizar a distribuição.'
+                  : 'Nenhuma foto vinculada a uma categoria ainda.'}
+              </p>
             </div>
           ) : (
             <div className="space-y-4 pt-2">

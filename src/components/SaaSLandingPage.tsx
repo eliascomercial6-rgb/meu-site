@@ -22,7 +22,13 @@ import {
   Palette, 
   Calendar,
   Lock,
-  Compass
+  Compass,
+  Sun,
+  Moon,
+  ChevronLeft,
+  ChevronRight,
+  Quote,
+  Star
 } from 'lucide-react';
 
 interface SaasLandingPageProps {
@@ -76,6 +82,36 @@ const DEMO_PHOTOS = [
   }
 ];
 
+// Fictional demo specialties — mirrors the "O Que Eu Capturo" section on the real
+// public site, with zero connection to any real photographer or client.
+const DEMO_CATEGORIES = [
+  {
+    id: 'demo-cat-1',
+    name: 'Editorial',
+    desc: 'Narrativas de moda com direção de arte autoral e luz cinematográfica.',
+    url: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&q=80&w=800'
+  },
+  {
+    id: 'demo-cat-2',
+    name: 'Retratos',
+    desc: 'Estudos de expressão e presença, sempre com iluminação intencional.',
+    url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=800'
+  },
+  {
+    id: 'demo-cat-3',
+    name: 'Arquitetura',
+    desc: 'Linhas, sombra e concreto — geometria registrada com precisão técnica.',
+    url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=800'
+  }
+];
+
+// Fictional demo testimonials — invented client names, not tied to any real person.
+const DEMO_TESTIMONIALS = [
+  { id: 'dt-1', client_name: 'Camila R.', rating: 5, content: 'Um olhar autoral raro. Cada imagem parecia já ter sido pensada antes mesmo do clique.' },
+  { id: 'dt-2', client_name: 'Estúdio Nortis', rating: 5, content: 'Processo profissional do início ao fim, com uma sensibilidade visual fora da curva.' },
+  { id: 'dt-3', client_name: 'Bruno T.', rating: 4, content: 'Entrega rápida e um cuidado enorme com a narrativa de cada ensaio.' }
+];
+
 function hexToRgb(hex: string): string {
   const clean = hex.replace('#', '');
   const bigint = parseInt(clean.length === 3
@@ -98,6 +134,8 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
   const [demoProposalSent, setDemoProposalSent] = useState(false);
   const [demoProposalName, setDemoProposalName] = useState('');
   const [selectedDemoPhoto, setSelectedDemoPhoto] = useState<typeof DEMO_PHOTOS[0] | null>(null);
+  const [demoTheme, setDemoTheme] = useState<'dark' | 'light'>('dark');
+  const [demoTestimonialIdx, setDemoTestimonialIdx] = useState(0);
 
   useEffect(() => {
     async function loadPhotographers() {
@@ -146,9 +184,9 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
       <div className="fixed bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[var(--app-accent)]/60 to-transparent z-50" />
 
       {/* Decorative Glowing Orbs */}
-      <div className="absolute top-[-10%] left-[20%] w-[600px] h-[600px] rounded-full bg-[var(--app-accent)]/[0.03] blur-[120px] pointer-events-none" />
-      <div className="absolute top-[35%] right-[-10%] w-[500px] h-[500px] rounded-full bg-zinc-900/[0.04] blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-[10%] left-[-10%] w-[400px] h-[400px] rounded-full bg-[var(--app-accent)]/[0.03] blur-[100px] pointer-events-none" />
+      <div className="absolute top-[-10%] left-[20%] w-[520px] h-[520px] rounded-full bg-[var(--app-accent)]/[0.018] blur-[130px] pointer-events-none" />
+      <div className="absolute top-[35%] right-[-10%] w-[440px] h-[440px] rounded-full bg-zinc-900/[0.025] blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-[10%] left-[-10%] w-[360px] h-[360px] rounded-full bg-[var(--app-accent)]/[0.018] blur-[110px] pointer-events-none" />
 
       {/* Header */}
       <header className="border-b border-white/[0.06] bg-black/80 backdrop-blur-xl sticky top-0 z-40 transition-all duration-300">
@@ -519,17 +557,17 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
       {demoOpen && (
         <div className="fixed inset-0 z-50 flex flex-col bg-neutral-950 text-neutral-100 overflow-y-auto animate-fade-in font-sans">
           {/* Demo header bar */}
-          <div className="bg-neutral-900 border-b border-zinc-800 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sticky top-0 z-50 shadow-md">
+          <div className="bg-neutral-900 border-b border-zinc-800 px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 sticky top-0 z-50 shadow-md">
             <div className="flex items-center gap-3">
-              <span className="px-2 py-0.5 rounded bg-zinc-200 text-neutral-950 font-semibold uppercase text-[9px] tracking-wider animate-pulse">MODO DEMONSTRAÇÃO</span>
-              <p className="text-xs text-neutral-400">Esta é uma simulação real e interativa de um site publicado no ar.</p>
+              <span className="px-2 py-0.5 rounded bg-zinc-200 text-neutral-950 font-semibold uppercase text-[9px] tracking-wider shrink-0">MODO DEMONSTRAÇÃO</span>
+              <p className="text-xs text-neutral-400 hidden sm:block">Esta é uma simulação real e interativa de um site publicado no ar.</p>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
               {/* Live color customizer */}
-              <div className="flex items-center gap-2 rounded-xl bg-black border border-white/5 p-1 px-2">
-                <Palette className="w-3.5 h-3.5 text-zinc-400" />
-                <span className="text-[10px] text-zinc-400 font-medium">Cor de destaque do site:</span>
+              <div className="flex items-center gap-2 rounded-xl bg-black border border-white/5 p-1 px-2 flex-wrap">
+                <Palette className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                <span className="text-[10px] text-zinc-400 font-medium hidden md:inline">Cor de destaque do site:</span>
                 <div className="flex gap-1.5">
                   {[
                     { hex: '#CBD5E1', name: 'Prata Mineral' },
@@ -564,7 +602,7 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
               real public site component, so this demo is a faithful preview
               instead of a disconnected mockup. */}
           <div
-            className="flex-1 text-[var(--pub-ink)] flex flex-col min-h-screen"
+            className={`flex-1 text-[var(--pub-ink)] flex flex-col min-h-screen ${demoTheme === 'light' ? 'light-mode' : ''}`}
             style={{
               // @ts-ignore — CSS custom properties
               '--pub-accent': demoAccentColor,
@@ -584,9 +622,16 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
                 <span className="font-display italic text-2xl font-light text-[var(--pub-ink)] tracking-tight">Marina Duarte</span>
                 <span className="text-[8px] uppercase tracking-widest text-[var(--pub-ink-muted)] font-semibold mt-1 font-sans">PORTFÓLIO EDITORIAL AUTORAL</span>
               </div>
-              <div className="flex items-center gap-6 text-xs text-[var(--pub-ink-muted)]">
-                <span className="hover:text-[var(--pub-ink)] cursor-pointer transition-colors">Portfólio</span>
-                <span className="hover:text-[var(--pub-ink)] cursor-pointer transition-colors" onClick={() => handleScrollToSection('demo-contato')}>Orçamento</span>
+              <div className="flex items-center gap-4 sm:gap-6 text-xs text-[var(--pub-ink-muted)]">
+                <span className="hidden sm:inline hover:text-[var(--pub-ink)] cursor-pointer transition-colors">Portfólio</span>
+                <span className="hidden sm:inline hover:text-[var(--pub-ink)] cursor-pointer transition-colors" onClick={() => handleScrollToSection('demo-contato')}>Orçamento</span>
+                <button
+                  onClick={() => setDemoTheme(t => t === 'dark' ? 'light' : 'dark')}
+                  className="w-8 h-8 rounded-full border border-[var(--pub-border)] flex items-center justify-center text-[var(--pub-ink-muted)] hover:text-[var(--pub-ink)] hover:border-[var(--pub-border-strong)] transition-colors"
+                  aria-label="Alternar tema"
+                >
+                  {demoTheme === 'light' ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
+                </button>
               </div>
             </nav>
 
@@ -600,6 +645,32 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
                 Fotógrafo autoral baseado em São Paulo. Exploro as sombras brutas do asfalto, a complexidade silenciosa do olhar contemporâneo e texturas orgânicas.
               </p>
             </header>
+
+            {/* Specialties — same section as "O Que Eu Capturo" on the real public site */}
+            <section className="pub-section bg-[var(--pub-bg-elevated)]" id="demo-especialidades">
+              <div className="pub-container">
+                <div className="text-center mb-16">
+                  <p className="pub-section__eyebrow">Especialidades</p>
+                  <h2 className="pub-section__title mb-0">O Que Eu Capturo</h2>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {DEMO_CATEGORIES.map((cat) => (
+                    <div
+                      key={cat.id}
+                      className="relative rounded-3xl overflow-hidden aspect-[3/4] w-full bg-[#0B0C0E] border border-[var(--pub-border)] group shadow-xl transition-all duration-500 hover:border-[var(--pub-accent)]/40"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/40 to-black/95 z-10" />
+                      <img src={cat.url} alt={cat.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" />
+                      <div className="absolute inset-0 z-20 p-8 flex flex-col justify-end">
+                        <span className="text-xs font-sans text-[var(--pub-accent)] mb-2 font-medium">Especialidade</span>
+                        <h3 className="font-display italic text-2xl text-white mb-3 font-medium">{cat.name}</h3>
+                        <p className="text-neutral-300 text-xs leading-relaxed line-clamp-3 opacity-90">{cat.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
 
             {/* Category selection */}
             <div className="pub-container w-full mb-12 mt-12">
@@ -632,6 +703,51 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
                 </div>
               ))}
             </div>
+
+            {/* Testimonials — same interactive slider style as the real public site */}
+            <section className="pub-section bg-[var(--pub-bg-elevated)]" id="demo-depoimentos">
+              <div className="pub-container max-w-4xl">
+                <div className="text-center mb-12">
+                  <p className="pub-section__eyebrow">Reconhecimento</p>
+                  <h2 className="pub-section__title mb-0">Depoimentos dos Clientes</h2>
+                </div>
+                <div className="relative p-8 md:p-14 rounded-3xl border border-[var(--pub-border)] bg-[var(--pub-bg)] text-center shadow-xl overflow-hidden glass-card">
+                  <Quote className="w-12 h-12 text-[var(--pub-accent)]/25 mx-auto mb-6" />
+                  <div className="min-h-[140px] flex flex-col justify-center">
+                    <p className="font-display italic text-lg md:text-2xl leading-relaxed text-white/90 mb-8 font-light">
+                      "{DEMO_TESTIMONIALS[demoTestimonialIdx].content}"
+                    </p>
+                    <div className="flex items-center justify-center gap-1.5 mb-2">
+                      {Array.from({ length: DEMO_TESTIMONIALS[demoTestimonialIdx].rating }).map((_, idx) => (
+                        <Star key={idx} className="w-4 h-4 fill-[var(--pub-accent)] text-[var(--pub-accent)]" />
+                      ))}
+                    </div>
+                    <p className="font-sans text-xs text-[var(--pub-accent)] font-medium">
+                      — {DEMO_TESTIMONIALS[demoTestimonialIdx].client_name}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-center gap-3 mt-10">
+                    <button
+                      onClick={() => setDemoTestimonialIdx((demoTestimonialIdx - 1 + DEMO_TESTIMONIALS.length) % DEMO_TESTIMONIALS.length)}
+                      className="w-10 h-10 rounded-full border border-[var(--pub-border)] flex items-center justify-center text-neutral-400 hover:text-white hover:border-white transition-all duration-200"
+                      aria-label="Anterior"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <span className="font-sans text-xs text-neutral-500">
+                      {demoTestimonialIdx + 1} de {DEMO_TESTIMONIALS.length}
+                    </span>
+                    <button
+                      onClick={() => setDemoTestimonialIdx((demoTestimonialIdx + 1) % DEMO_TESTIMONIALS.length)}
+                      className="w-10 h-10 rounded-full border border-[var(--pub-border)] flex items-center justify-center text-neutral-400 hover:text-white hover:border-white transition-all duration-200"
+                      aria-label="Próximo"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
 
             {/* Simulated Contact Form */}
             <section id="demo-contato" className="pub-section pt-20 border-t border-[var(--pub-border)] bg-[var(--pub-bg-elevated)] relative">
@@ -689,6 +805,14 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
                 )}
               </div>
             </section>
+
+            {/* Footer — same treatment as the real public site */}
+            <footer className="bg-neutral-950 border-t border-[var(--pub-border)] pt-14 pb-8 mt-auto">
+              <div className="pub-container flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+                <span className="font-display italic text-lg text-[var(--pub-ink)]">Marina Duarte</span>
+                <p className="text-[10px] text-[var(--pub-ink-muted)] font-sans">Prévia gerada apenas para fins de demonstração — sem vínculo com pessoas reais.</p>
+              </div>
+            </footer>
           </div>
 
           {/* Lightbox for Selected Photo */}

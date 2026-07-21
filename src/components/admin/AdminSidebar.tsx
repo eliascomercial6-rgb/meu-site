@@ -66,11 +66,11 @@ export default function AdminSidebar({ activeTab, onTabChange, onLogout, userNam
                 onClick={() => onTabChange(item.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium tracking-wide rounded-xl transition-all duration-200 ${
                   isActive 
-                    ? 'text-white bg-[linear-gradient(90deg,rgba(231,233,236,0.1)_0%,rgba(231,233,236,0.02)_100%)] border-l-2 border-[var(--app-accent)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]' 
+                    ? 'app-nav-active text-white border-l-2 border-[var(--app-accent)]' 
                     : 'text-neutral-400 hover:text-white hover:bg-white/[0.03] border-l-2 border-transparent'
                 }`}
               >
-                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[var(--app-accent)] drop-shadow-[0_0_6px_rgba(231,233,236,0.5)]' : 'text-neutral-500'}`} />
+                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[var(--app-accent)] drop-shadow-[0_0_3px_rgba(231,233,236,0.3)]' : 'text-neutral-500'}`} />
                 {item.label}
               </button>
             );
@@ -82,7 +82,7 @@ export default function AdminSidebar({ activeTab, onTabChange, onLogout, userNam
       <div className="px-3 pt-6 border-t border-zinc-900 space-y-3">
         {userName && (
           <div className="px-4 py-2 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-neutral-900 border border-[var(--app-accent)]/30 shadow-[0_0_10px_rgba(var(--app-accent-rgb),0.15)] flex items-center justify-center font-sans text-xs text-[var(--app-accent)] font-semibold">
+            <div className="w-8 h-8 rounded-full bg-neutral-900 border border-[var(--app-accent)]/30 shadow-[0_0_6px_rgba(var(--app-accent-rgb),0.1)] flex items-center justify-center font-sans text-xs text-[var(--app-accent)] font-semibold">
               {userName.substring(0, 2).toUpperCase()}
             </div>
             <div className="min-w-0">

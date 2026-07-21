@@ -7,6 +7,13 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
+/* Site-wide scale reduction (~7%) — since Tailwind's spacing/type scale is
+   rem-based, shrinking the root font-size shrinks everything proportionally
+   (admin + public + SaaS) without needing to touch every component. */
+html {
+  font-size: 93%;
+}
+
 /* App-wide accent used across the SaaS landing page + admin panel (Backlog-inspired) */
 :root {
   --app-accent: #E7E9EC;
@@ -19,8 +26,8 @@
 /* Custom CSS variables for the public view */
 :root {
   --pub-bg: #070708;
-  --pub-bg-elevated: #0E0F11;
-  --pub-surface: #15171A;
+  --pub-bg-elevated: #0A0B0C;
+  --pub-surface: #0F1012;
   --pub-border: rgba(255, 255, 255, 0.05);
   --pub-border-strong: rgba(255, 255, 255, 0.12);
   --pub-glass-bg: rgba(7, 7, 8, 0.75);
@@ -37,16 +44,16 @@
   --pub-bg: #FAF9F6;
   --pub-bg-elevated: #F2F1EC;
   --pub-surface: #FFFFFF;
-  --pub-border: rgba(0, 0, 0, 0.06);
-  --pub-border-strong: rgba(0, 0, 0, 0.14);
+  --pub-border: rgba(15, 23, 42, 0.12);
+  --pub-border-strong: rgba(15, 23, 42, 0.22);
   --pub-glass-bg: rgba(250, 249, 246, 0.85);
   --pub-ink: #1F2937;
-  --pub-ink-muted: #545B68;
-  --pub-accent: #475569; /* Slate/Silver Gray */
+  --pub-ink-muted: #4B5262;
+  --pub-accent: #3F4C60; /* Slate/Silver Gray, darkened for AA text contrast */
   --pub-accent-hover: #1E293B;
   --pub-accent-light: #F1F5F9;
   --pub-accent-ink: #FFFFFF;
-  --pub-accent-rgb: 71, 85, 105;
+  --pub-accent-rgb: 63, 76, 96;
 }
 
 /* Scrollbar customizations */
@@ -146,6 +153,17 @@
   outline: none;
 }
 
+.pub-btn:focus-visible {
+  outline: 2px solid var(--pub-accent, #CBD5E1);
+  outline-offset: 3px;
+}
+
+.app-btn-accent:focus-visible,
+.app-focus:focus-visible {
+  outline: 2px solid var(--app-accent, #E7E9EC);
+  outline-offset: 2px;
+}
+
 .pub-btn-primary {
   background: linear-gradient(135deg, var(--pub-accent, #E2E8F0) 0%, var(--pub-accent-hover, #FFFFFF) 50%, var(--pub-accent, #E2E8F0) 100%);
   background-size: 200% 100%;
@@ -189,15 +207,15 @@
   height: 6px;
   border-radius: 999px;
   background-color: var(--pub-accent, #CBD5E1);
-  box-shadow: 0 0 10px 1px rgba(var(--pub-accent-rgb, 226, 232, 240), 0.8);
+  box-shadow: 0 0 6px 0.5px rgba(var(--pub-accent-rgb, 226, 232, 240), 0.5);
 }
 
 .pub-glow-arc {
-  background: radial-gradient(ellipse 60% 100% at 50% 100%, rgba(var(--pub-accent-rgb, 226, 232, 240), 0.14), transparent 70%);
+  background: radial-gradient(ellipse 60% 100% at 50% 100%, rgba(var(--pub-accent-rgb, 226, 232, 240), 0.045), transparent 70%);
 }
 
 .pub-portrait-glow {
-  background: radial-gradient(circle at 50% 40%, rgba(var(--pub-accent-rgb, 226, 232, 240), 0.25), transparent 65%);
+  background: radial-gradient(circle at 50% 40%, rgba(var(--pub-accent-rgb, 226, 232, 240), 0.08), transparent 65%);
   filter: blur(40px);
 }
 
@@ -237,12 +255,12 @@
   height: 6px;
   border-radius: 999px;
   background-color: var(--app-accent);
-  box-shadow: 0 0 8px 1px rgba(var(--app-accent-rgb), 0.7);
+  box-shadow: 0 0 5px 0.5px rgba(var(--app-accent-rgb), 0.45);
 }
 
 /* Soft horizon glow used behind hero art / featured cards */
 .app-horizon-glow {
-  background: radial-gradient(ellipse 60% 100% at 50% 100%, rgba(var(--app-accent-rgb), 0.16), transparent 70%);
+  background: radial-gradient(ellipse 60% 100% at 50% 100%, rgba(var(--app-accent-rgb), 0.09), transparent 70%);
 }
 
 .app-focus:focus {
@@ -270,12 +288,26 @@
   transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
 }
 .chrome-card-hover:hover {
-  border-color: rgba(var(--app-accent-rgb), 0.28);
-  box-shadow: 0 12px 30px -12px rgba(var(--app-accent-rgb), 0.18), inset 0 1px 1px rgba(255,255,255,0.04);
+  border-color: rgba(var(--app-accent-rgb), 0.2);
+  box-shadow: 0 10px 24px -14px rgba(var(--app-accent-rgb), 0.12), inset 0 1px 1px rgba(255,255,255,0.04);
   transform: translateY(-1px);
 }
 
 /* Ambient chrome glow used behind the admin workspace content area */
 .app-workspace-glow {
-  background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(var(--app-accent-rgb), 0.05), transparent 70%);
+  background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(var(--app-accent-rgb), 0.035), transparent 70%);
+}
+
+/* Shiny chrome/silver treatment for the active item in the admin sidebar nav */
+.app-nav-active {
+  background: linear-gradient(90deg, rgba(var(--app-accent-rgb), 0.12) 0%, rgba(var(--app-accent-rgb), 0.02) 100%);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.06), inset 0 0 0 1px rgba(var(--app-accent-rgb), 0.14);
+}
+
+/* Subtle decorative dot-grid texture for the SaaS landing page hero/sections */
+.saas-grid-texture {
+  background-image: radial-gradient(rgba(var(--app-accent-rgb), 0.1) 1px, transparent 1px);
+  background-size: 28px 28px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 40%, transparent 100%);
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, black 40%, transparent 100%);
 }

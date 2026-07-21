@@ -11,7 +11,8 @@ import Lightbox from './Lightbox';
 import { 
   Sun, Moon, MessageSquare, Instagram, Mail, Phone, MapPin, 
   ChevronLeft, ChevronRight, CornerDownRight, ArrowUpRight,
-  ArrowUp, Sparkles, Star, Quote, Send, ArrowRight, Check, Heart
+  ArrowUp, Sparkles, Star, Quote, Send, ArrowRight, Check, Heart,
+  Search, X, FolderHeart, Tags
 } from 'lucide-react';
 
 interface PublicPortfolioProps {
@@ -73,7 +74,15 @@ export default function PublicPortfolio({ slug, onNavigateHome }: PublicPortfoli
   // Specialities carousel page control
   const [carouselPage, setCarouselPage] = useState(0);
 
+  // "O Que Eu Capturo" — keeps the specialty grid compact (max 3) for photographers
+  // with few categories, with a small dot-to-pill control to reveal the rest.
+  const [showAllCategories, setShowAllCategories] = useState(false);
+
   const [showBackToTop, setShowBackToTop] = useState(false);
+
+  // Header search — filters categories & albums already loaded on the page
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -263,7 +272,7 @@ export default function PublicPortfolio({ slug, onNavigateHome }: PublicPortfoli
         <h1 className="font-display italic text-3xl md:text-4xl text-white max-w-md mb-8">{errorMsg || 'Portfólio indisponível.'}</h1>
         <button 
           onClick={onNavigateHome}
-          className="px-6 py-3 rounded-xl text-xs font-semibold tracking-wider text-zinc-950 bg-gradient-to-b from-white via-zinc-200 to-zinc-300 hover:from-white hover:via-zinc-100 hover:to-zinc-200 border border-zinc-400/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6),0_1.5px_3px_rgba(0,0,0,0.15)] transition-all duration-200 cursor-pointer"
+          className="app-btn-accent px-6 py-3 rounded-xl text-xs font-semibold tracking-wider transition-all duration-200 cursor-pointer"
         >
           Voltar para Home
         </button>
@@ -332,6 +341,28 @@ export default function PublicPortfolio({ slug, onNavigateHome }: PublicPortfoli
     setActiveTestimonialIdx((prev) => (prev - 1 + testimonials.length) % testimonials.length);
   };
 
+  // Live client-side search across the categories & albums already loaded
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const searchedCategories = normalizedQuery
+    ? categories.filter(c => c.name.toLowerCase().includes(normalizedQuery))
+    : [];
+  const searchedAlbums = normalizedQuery
+    ? albums.filter(a => a.is_published && a.title.toLowerCase().includes(normalizedQuery))
+    : [];
+  const hasSearchResults = searchedCategories.length > 0 || searchedAlbums.length > 0;
+
+  const handleSearchSelectCategory = () => {
+    setSearchOpen(false);
+    setSearchQuery('');
+    document.getElementById('o-que-eu-capturo')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleSearchSelectAlbum = (album: Album) => {
+    setSearchOpen(false);
+    setSearchQuery('');
+    openAlbumOverlay(album);
+  };
+
   return (
     <div 
       className={`pub-body min-h-screen bg-[var(--pub-bg,#070708)] text-[var(--pub-ink,#F3F4F6)] font-sans transition-colors duration-300`}
@@ -355,14 +386,88 @@ export default function PublicPortfolio({ slug, onNavigateHome }: PublicPortfoli
             )}
           </div>
 
-          <div className="flex items-center gap-6">
-            <nav className="hidden md:flex items-center gap-8 text-sm font-sans text-neutral-400">
+          <div className="flex items-center gap-3 md:gap-6">
+            <nav className="hidden lg:flex items-center gap-8 text-sm font-sans text-neutral-400">
               <a href="#o-que-eu-capturo" className="hover:text-[var(--pub-accent,#CBD5E1)] transition-colors duration-200">Especialidades</a>
               <a href="#portfolio" className="hover:text-[var(--pub-accent,#CBD5E1)] transition-colors duration-200">Portfólio</a>
               <a href="#fotografias" className="hover:text-[var(--pub-accent,#CBD5E1)] transition-colors duration-200">Acervo</a>
               <a href="#quem-tira-suas-fotos" className="hover:text-[var(--pub-accent,#CBD5E1)] transition-colors duration-200">Sobre</a>
               <a href="#contato" className="hover:text-[var(--pub-accent,#CBD5E1)] transition-colors duration-200">Contato</a>
             </nav>
+
+            {/* Search — categories & albums */}
+            <div className="relative">
+              {searchOpen ? (
+                <div className="flex items-center gap-2 bg-[var(--pub-surface)] border border-[var(--pub-border-strong)] rounded-full pl-4 pr-1.5 py-1.5 w-[13rem] sm:w-72 shadow-lg">
+                  <Search className="w-3.5 h-3.5 text-[var(--pub-ink-muted)] shrink-0" />
+                  <input 
+                    autoFocus
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Escape') { setSearchOpen(false); setSearchQuery(''); } }}
+                    placeholder="Buscar categorias e álbuns..."
+                    className="flex-1 min-w-0 bg-transparent text-sm text-[var(--pub-ink)] placeholder:text-[var(--pub-ink-muted)] outline-none"
+                  />
+                  <button
+                    onClick={() => { setSearchOpen(false); setSearchQuery(''); }}
+                    className="p-1.5 rounded-full hover:bg-neutral-500/10 text-[var(--pub-ink-muted)] shrink-0"
+                    aria-label="Fechar busca"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+
+                  {normalizedQuery && (
+                    <div className="absolute top-full mt-2 right-0 w-full sm:w-80 max-h-96 overflow-y-auto rounded-2xl border border-[var(--pub-border-strong)] bg-[var(--pub-surface)] shadow-2xl z-50 animate-scale-up">
+                      {!hasSearchResults ? (
+                        <p className="text-xs text-[var(--pub-ink-muted)] font-sans text-center py-8 px-4">Nenhum resultado para "{searchQuery}".</p>
+                      ) : (
+                        <div className="py-2">
+                          {searchedCategories.length > 0 && (
+                            <div className="px-2 pb-1">
+                              <span className="block px-3 py-1.5 text-[10px] uppercase tracking-wider text-[var(--pub-ink-muted)] font-semibold">Especialidades</span>
+                              {searchedCategories.map(cat => (
+                                <button
+                                  key={cat.id}
+                                  onClick={handleSearchSelectCategory}
+                                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-[var(--pub-ink)] hover:bg-neutral-500/10 transition-colors text-left cursor-pointer"
+                                >
+                                  <Tags className="w-3.5 h-3.5 text-[var(--pub-accent,#CBD5E1)] shrink-0" />
+                                  {cat.name}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          {searchedAlbums.length > 0 && (
+                            <div className="px-2 pt-1 border-t border-[var(--pub-border)]">
+                              <span className="block px-3 py-1.5 text-[10px] uppercase tracking-wider text-[var(--pub-ink-muted)] font-semibold">Álbuns</span>
+                              {searchedAlbums.map(album => (
+                                <button
+                                  key={album.id}
+                                  onClick={() => handleSearchSelectAlbum(album)}
+                                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-[var(--pub-ink)] hover:bg-neutral-500/10 transition-colors text-left cursor-pointer"
+                                >
+                                  <FolderHeart className="w-3.5 h-3.5 text-[var(--pub-accent,#CBD5E1)] shrink-0" />
+                                  {album.title}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button
+                  onClick={() => setSearchOpen(true)}
+                  className="p-2.5 rounded-full border border-[var(--pub-border)] hover:bg-neutral-500/10 text-[var(--pub-ink)] hover:scale-105 active:scale-95 transition-all duration-200"
+                  aria-label="Buscar categorias e álbuns"
+                >
+                  <Search className="w-4 h-4" />
+                </button>
+              )}
+            </div>
 
             {/* Dark/Light mode toggle */}
             <button 
@@ -446,15 +551,16 @@ export default function PublicPortfolio({ slug, onNavigateHome }: PublicPortfoli
             </div>
 
             <div className="pt-4 pb-8">
-              {/* Responsive space-filling grid of specialties */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {categories.map((cat) => {
+              {/* Compact grid of specialties — capped at 3 so photographers with
+                  fewer categories still get a balanced, non-empty layout */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {(showAllCategories ? categories : categories.slice(0, 3)).map((cat) => {
                   const coverUrl = cat.description?.includes('http') ? cat.description : undefined;
                   const displayDesc = cat.description?.startsWith('http') ? 'Especialidade de alta sensibilidade e técnica apurada.' : (cat.description || 'Breve especialidade do profissional.');
                   return (
                     <div 
                       key={cat.id}
-                      className="relative rounded-3xl overflow-hidden aspect-[3/4] w-full bg-neutral-900 border border-[var(--pub-border)] group shadow-xl transition-all duration-500 hover:border-[var(--pub-accent,#CBD5E1)]/40 hover:shadow-[0_25px_60px_-20px_rgba(var(--pub-accent-rgb,226,232,240),0.35)]"
+                      className="relative rounded-3xl overflow-hidden aspect-[3/4] w-full bg-[#0B0C0E] border border-[var(--pub-border)] group shadow-xl transition-all duration-500 hover:border-[var(--pub-accent,#CBD5E1)]/40 hover:shadow-[0_20px_45px_-22px_rgba(var(--pub-accent-rgb,226,232,240),0.16)]"
                     >
                       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/40 to-black/95 z-10" />
                       {coverUrl ? (
@@ -479,6 +585,28 @@ export default function PublicPortfolio({ slug, onNavigateHome }: PublicPortfoli
                   );
                 })}
               </div>
+
+              {/* Dot-to-pill control: only appears when there are more than 3
+                  specialties, so smaller photographers never see an empty control */}
+              {categories.length > 3 && (
+                <div className="flex justify-center mt-10">
+                  <button
+                    onClick={() => setShowAllCategories(v => !v)}
+                    aria-expanded={showAllCategories}
+                    aria-label={showAllCategories ? 'Mostrar menos especialidades' : `Mostrar mais ${categories.length - 3} especialidades`}
+                    className={`group flex items-center justify-center overflow-hidden rounded-full border border-[var(--pub-border)] bg-[var(--pub-surface)] text-[var(--pub-ink-muted)] hover:text-[var(--pub-ink)] hover:border-[var(--pub-accent,#CBD5E1)]/30 transition-all duration-300 ease-out cursor-pointer h-8 ${
+                      showAllCategories ? 'px-4 w-auto' : 'w-8 hover:w-auto hover:px-4'
+                    }`}
+                  >
+                    <span className={`shrink-0 rounded-full bg-[var(--pub-accent,#CBD5E1)] transition-all duration-300 w-1.5 h-1.5 ${showAllCategories ? 'mr-2' : 'group-hover:mr-2'}`} />
+                    <span className={`whitespace-nowrap text-[10px] font-sans font-medium tracking-wide transition-opacity duration-200 ${
+                      showAllCategories ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                    }`}>
+                      {showAllCategories ? 'Mostrar menos' : `+${categories.length - 3} especialidades`}
+                    </span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -525,7 +653,7 @@ export default function PublicPortfolio({ slug, onNavigateHome }: PublicPortfoli
                 {featuredAlbum && (
                   <button 
                     onClick={() => openAlbumOverlay(featuredAlbum)}
-                    className="relative rounded-3xl overflow-hidden aspect-[4/3] lg:col-span-2 bg-neutral-900 border border-[var(--pub-border)] text-left group shadow-lg shrink-0 transition-all duration-500 hover:border-[var(--pub-accent,#CBD5E1)]/40 hover:shadow-[0_25px_60px_-20px_rgba(var(--pub-accent-rgb,226,232,240),0.35)] cursor-pointer"
+                    className="relative rounded-3xl overflow-hidden aspect-[4/3] lg:col-span-2 bg-[#0B0C0E] border border-[var(--pub-border)] text-left group shadow-lg shrink-0 transition-all duration-500 hover:border-[var(--pub-accent,#CBD5E1)]/40 hover:shadow-[0_20px_45px_-22px_rgba(var(--pub-accent-rgb,226,232,240),0.16)] cursor-pointer"
                   >
                     <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent z-10" />
                     {featuredAlbum.cover_url ? (
@@ -564,7 +692,7 @@ export default function PublicPortfolio({ slug, onNavigateHome }: PublicPortfoli
                       <button 
                         key={album.id}
                         onClick={() => openAlbumOverlay(album)}
-                        className="relative rounded-3xl overflow-hidden flex-1 aspect-[4/3] lg:aspect-auto bg-neutral-900 border border-[var(--pub-border)] text-left group shadow-lg min-h-[195px] transition-all duration-500 hover:border-[var(--pub-accent,#CBD5E1)]/40 hover:shadow-[0_25px_60px_-20px_rgba(var(--pub-accent-rgb,226,232,240),0.35)] cursor-pointer"
+                        className="relative rounded-3xl overflow-hidden flex-1 aspect-[4/3] lg:aspect-auto bg-[#0B0C0E] border border-[var(--pub-border)] text-left group shadow-lg min-h-[195px] transition-all duration-500 hover:border-[var(--pub-accent,#CBD5E1)]/40 hover:shadow-[0_20px_45px_-22px_rgba(var(--pub-accent-rgb,226,232,240),0.16)] cursor-pointer"
                       >
                         <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-transparent z-10" />
                         {album.cover_url ? (
@@ -663,7 +791,7 @@ export default function PublicPortfolio({ slug, onNavigateHome }: PublicPortfoli
                       <button 
                         key={photo.id}
                         onClick={() => openPhotoLightbox(filteredPhotos, idx)}
-                        className={`relative rounded-3xl overflow-hidden aspect-[3/4] bg-neutral-900 border border-[var(--pub-border)] group shadow-lg transition-all duration-500 hover:border-[var(--pub-accent,#CBD5E1)]/40 hover:shadow-[0_25px_60px_-20px_rgba(var(--pub-accent-rgb,226,232,240),0.35)] hover:-translate-y-1 cursor-pointer ${
+                        className={`relative rounded-3xl overflow-hidden aspect-[3/4] bg-[#0B0C0E] border border-[var(--pub-border)] group shadow-lg transition-all duration-500 hover:border-[var(--pub-accent,#CBD5E1)]/40 hover:shadow-[0_20px_45px_-22px_rgba(var(--pub-accent-rgb,226,232,240),0.16)] hover:-translate-y-1 cursor-pointer ${
                           isSecondRow ? 'opacity-35 hover:opacity-100' : ''
                         }`}
                       >
@@ -723,7 +851,7 @@ export default function PublicPortfolio({ slug, onNavigateHome }: PublicPortfoli
               <div className="flex justify-center lg:justify-start">
                 <div className="relative w-full max-w-[380px]">
                   <div className="pointer-events-none absolute -inset-6 pub-portrait-glow" />
-                  <div className="relative aspect-[3/4] rounded-3xl border border-[var(--pub-border)] shadow-2xl bg-neutral-900 overflow-hidden">
+                  <div className="relative aspect-[3/4] rounded-3xl border border-[var(--pub-border)] shadow-2xl bg-[#0B0C0E] overflow-hidden">
                     <img 
                       src={settings?.avatar_url || settings?.logo_url || 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?q=80&w=800'} 
                       alt={photographer.name}
@@ -1080,7 +1208,7 @@ export default function PublicPortfolio({ slug, onNavigateHome }: PublicPortfoli
                     setGalleryOverlayOpen(false);
                     openAlbumOverlay(album);
                   }}
-                  className="relative rounded-3xl overflow-hidden aspect-[4/3] bg-neutral-900 border border-neutral-800 text-left group shadow-lg transition-all duration-300 hover:border-neutral-700 cursor-pointer"
+                  className="relative rounded-3xl overflow-hidden aspect-[4/3] bg-[#0B0C0E] border border-neutral-800 text-left group shadow-lg transition-all duration-300 hover:border-neutral-700 cursor-pointer"
                 >
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent z-10" />
                   {album.cover_url ? (
@@ -1150,7 +1278,7 @@ export default function PublicPortfolio({ slug, onNavigateHome }: PublicPortfoli
                   <button 
                     key={photo.id}
                     onClick={() => openPhotoLightbox(albumPhotosForOverlay, idx)}
-                    className="relative rounded-2xl overflow-hidden aspect-[3/4] bg-neutral-900 border border-neutral-800 group shadow-md hover:border-neutral-600 transition-all cursor-pointer"
+                    className="relative rounded-2xl overflow-hidden aspect-[3/4] bg-[#0B0C0E] border border-neutral-800 group shadow-md hover:border-neutral-600 transition-all cursor-pointer"
                   >
                     <div className="absolute inset-0 bg-black/10 hover:bg-black/0 transition-colors z-10" />
                     <img 
@@ -1195,7 +1323,7 @@ export default function PublicPortfolio({ slug, onNavigateHome }: PublicPortfoli
                 <button 
                   key={photo.id}
                   onClick={() => openPhotoLightbox(filteredPhotos, idx)}
-                  className="relative rounded-2xl overflow-hidden aspect-[3/4] bg-neutral-900 border border-neutral-800 group shadow-md hover:border-neutral-600 transition-all cursor-pointer"
+                  className="relative rounded-2xl overflow-hidden aspect-[3/4] bg-[#0B0C0E] border border-neutral-800 group shadow-md hover:border-neutral-600 transition-all cursor-pointer"
                 >
                   <div className="absolute inset-0 bg-black/10 hover:bg-black/0 transition-colors z-10" />
                   <img 
@@ -1235,7 +1363,7 @@ export default function PublicPortfolio({ slug, onNavigateHome }: PublicPortfoli
             href={whatsappHref}
             target="_blank"
             rel="noopener"
-            className="p-4 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white shadow-2xl hover:scale-110 active:scale-95 transition-all duration-300 flex items-center justify-center animate-bounce group"
+            className="p-4 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white shadow-2xl hover:scale-110 active:scale-95 transition-all duration-300 flex items-center justify-center group"
             aria-label="Fale Conosco"
           >
             <Phone className="w-5 h-5 group-hover:rotate-12 transition-transform" />

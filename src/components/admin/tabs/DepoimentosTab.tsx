@@ -179,8 +179,8 @@ export default function DepoimentosTab({ userId, onShowToast }: DepoimentosTabPr
           <p className="text-neutral-500 font-sans text-xs">Nenhum depoimento cadastrado.</p>
         </div>
       ) : (
-        <div className="border border-white/5 bg-neutral-950/20 rounded-2xl overflow-hidden shadow-sm">
-          <table className="w-full text-left border-collapse text-sm">
+        <div className="border border-white/5 bg-neutral-950/20 rounded-2xl overflow-x-auto shadow-sm">
+          <table className="w-full text-left border-collapse text-sm min-w-[720px]">
             <thead>
               <tr className="border-b border-white/5 bg-neutral-950/40">
                 <th className="p-4 text-[10px] font-sans uppercase text-neutral-500 tracking-wider">Cliente</th>
