@@ -20,6 +20,11 @@ export const TRIAL_DAYS = 14;
 export const TRIAL_STORAGE_LIMIT_GB = 1;
 export const PAID_STORAGE_LIMIT_GB = 10;
 
+// Must match GRACE_PERIOD_DAYS in the `purge-expired-trials` Edge Function —
+// how long an expired trial account is kept (upload-blocked, but not deleted)
+// before it and all of its data/files are permanently removed.
+export const GRACE_PERIOD_DAYS = 7;
+
 export interface PhotographerPlanFields {
   plan?: string | null;
   trial_ends_at?: string | null;
@@ -33,6 +38,8 @@ export interface PlanLimits {
   trialEndsAt: Date | null;
   daysLeft: number;
   storageLimitGB: number;
+  /** Days left before the account is permanently deleted, once expired. Null while still active. */
+  daysUntilDeletion: number | null;
 }
 
 export function getPlanLimits(photographer: PhotographerPlanFields | null | undefined): PlanLimits {
@@ -52,6 +59,12 @@ export function getPlanLimits(photographer: PhotographerPlanFields | null | unde
   const daysLeft = Math.max(0, Math.ceil(msLeft / (24 * 60 * 60 * 1000)));
   const isExpired = isTrial && trialEndsAt !== null && msLeft <= 0;
 
+  let daysUntilDeletion: number | null = null;
+  if (isExpired && trialEndsAt) {
+    const deletionAt = trialEndsAt.getTime() + GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000;
+    daysUntilDeletion = Math.max(0, Math.ceil((deletionAt - now.getTime()) / (24 * 60 * 60 * 1000)));
+  }
+
   return {
     plan,
     isTrial,
@@ -59,5 +72,6 @@ export function getPlanLimits(photographer: PhotographerPlanFields | null | unde
     trialEndsAt,
     daysLeft,
     storageLimitGB: isTrial ? TRIAL_STORAGE_LIMIT_GB : PAID_STORAGE_LIMIT_GB,
+    daysUntilDeletion,
   };
 }

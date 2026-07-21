@@ -286,8 +286,21 @@ export default function FotosTab({ userId, onShowToast }: FotosTabProps) {
         }
 
         successCount++;
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error uploading photo:', err);
+
+        // Server-side trigger (belt-and-suspenders to the client-side pre-check above)
+        // blocked this insert — stop the loop instead of failing file-by-file.
+        const rawMessage: string = err?.message || '';
+        if (rawMessage.includes('PLAN_TRIAL_EXPIRED')) {
+          onShowToast('Seu teste grátis expirou. Assine um plano para continuar enviando fotos.', true);
+          break;
+        }
+        if (rawMessage.includes('PLAN_STORAGE_LIMIT_EXCEEDED')) {
+          onShowToast(`Envio interrompido: limite de armazenamento do plano atingido.`, true);
+          break;
+        }
+
         failCount++;
       }
     }
@@ -538,7 +551,7 @@ export default function FotosTab({ userId, onShowToast }: FotosTabProps) {
             {planLimits && (
               <p className={`text-[10px] font-sans uppercase tracking-wider mt-1.5 pr-1 ${planLimits.isExpired ? 'text-red-400' : planLimits.isTrial ? 'text-zinc-400' : 'text-neutral-500'}`}>
                 {planLimits.isExpired
-                  ? 'Faça upgrade para voltar a enviar fotos'
+                  ? `Assine em até ${planLimits.daysUntilDeletion} ${planLimits.daysUntilDeletion === 1 ? 'dia' : 'dias'} para não perder suas fotos`
                   : planLimits.isTrial
                     ? `Teste grátis · ${planLimits.daysLeft} ${planLimits.daysLeft === 1 ? 'dia restante' : 'dias restantes'} · ${(storageUsedBytes / 1024 ** 3).toFixed(2)} / ${planLimits.storageLimitGB} GB`
                     : `${(storageUsedBytes / 1024 ** 3).toFixed(2)} / ${planLimits.storageLimitGB} GB usados`}

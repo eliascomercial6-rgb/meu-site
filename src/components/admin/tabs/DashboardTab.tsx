@@ -250,7 +250,7 @@ export default function DashboardTab({ userId, photographerName, onTabChange }: 
               </p>
               <p className="text-xs text-neutral-400">
                 {planLimits.isExpired
-                  ? 'Novos uploads estão bloqueados. Faça upgrade para continuar publicando fotos.'
+                  ? `Novos uploads bloqueados. Seus dados serão excluídos permanentemente em ${planLimits.daysUntilDeletion} ${planLimits.daysUntilDeletion === 1 ? 'dia' : 'dias'} caso não assine.`
                   : `Plano de teste com até ${planLimits.storageLimitGB} GB de armazenamento.`}
               </p>
             </div>
