@@ -131,7 +131,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
     if (!userId) {
       return (
         <div className="flex items-center justify-center py-24">
-          <div className="w-8 h-8 rounded-full border-2 border-white/10 border-t-[var(--app-lime)] animate-spin" />
+          <div className="w-8 h-8 rounded-full border-2 border-white/10 border-t-[var(--app-accent)] animate-spin" />
         </div>
       );
     }
@@ -157,7 +157,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#050506] text-neutral-200 selection:bg-white/10 selection:text-zinc-200">
+    <div className="flex flex-col md:flex-row min-h-screen md:h-screen md:overflow-hidden bg-[#050506] text-neutral-200 selection:bg-white/10 selection:text-zinc-200">
       <AdminSidebar 
         activeTab={activeTab} 
         onTabChange={setActiveTab} 
@@ -165,8 +165,23 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
         onLogout={handleLogout} 
       />
 
-      <main className="flex-1 p-6 md:p-10 max-h-screen overflow-y-auto relative">
-        <div className="app-workspace-glow absolute top-0 left-0 right-0 h-96 pointer-events-none -z-0" />
+      <main className="flex-1 p-5 sm:p-6 md:p-10 md:h-full md:overflow-y-auto relative">
+        {/* Ambient workspace lighting — layered like the landing hero instead
+            of a single flat glow, but kept very subtle since this is a
+            working surface, not a hero moment. */}
+        <div className="absolute top-0 left-0 right-0 h-[640px] pointer-events-none -z-0">
+          <div className="app-workspace-glow absolute inset-0" />
+          <div
+            className="absolute top-[-20%] right-[10%] w-[420px] h-[420px] rounded-full blur-[140px] mix-blend-screen opacity-60"
+            style={{ background: 'radial-gradient(circle, rgba(214,220,228,0.06) 0%, transparent 70%)' }}
+          />
+          <div
+            className="absolute inset-0 opacity-[0.03] mix-blend-overlay"
+            style={{
+              backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='pn'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23pn)'/%3E%3C/svg%3E\")",
+            }}
+          />
+        </div>
         <div className="max-w-6xl mx-auto space-y-8 pb-12 relative z-10">
           {renderTabContent()}
         </div>

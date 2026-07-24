@@ -195,36 +195,35 @@ export default function DashboardTab({ userId, photographerName, onTabChange }: 
 
   return (
     <div className="space-y-8 animate-fade-in text-neutral-200">
-      {/* Dynamic Status / Welcome Header */}
-      <div className="p-6 md:p-8 rounded-3xl border border-zinc-900 bg-black relative overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.02)]">
-        {/* Chrome hairline accent */}
-        <div className="absolute top-0 left-0 right-0 h-px bg-[linear-gradient(90deg,transparent_0%,rgba(231,233,236,0.5)_50%,transparent_100%)]" />
-        <div className="absolute top-0 right-0 w-80 h-80 bg-[var(--app-accent)]/[0.04] rounded-full blur-3xl -z-10" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-zinc-800/5 rounded-full blur-3xl -z-10" />
-
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-zinc-300 shadow-[0_0_5px_rgba(255,255,255,0.45)]" />
-              <span className="text-[10px] font-sans uppercase text-zinc-400 font-semibold tracking-widest">Ambiente de Gestão Autoral</span>
-            </div>
-            <h2 className="text-2xl md:text-3xl font-display italic text-white font-medium">Seja bem-vindo de volta, {photographerName}!</h2>
-            <p className="text-xs text-neutral-400 font-light max-w-xl">
-              Seu painel administrativo está integrado ao Supabase. Todas as fotos cadastradas, depoimentos e álbuns publicados refletem instantaneamente para seus clientes.
-            </p>
+      {/* Welcome — open editorial header instead of a boxed card. A stacked
+          pile of bordered panels reads as a template; a page with one clear
+          point of entry reads as a product. */}
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-7 border-b border-white/5 relative">
+        <div className="pointer-events-none absolute -top-16 -left-16 w-72 h-72 rounded-full bg-[var(--app-accent)]/[0.05] blur-[110px] -z-10" />
+        <div className="space-y-3 max-w-2xl">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--app-accent)] shadow-[0_0_6px_rgba(var(--app-accent-rgb),0.6)]" />
+            <span className="text-[10px] font-sans uppercase text-neutral-500 font-semibold tracking-[0.2em]">Ambiente de Gestão Autoral</span>
           </div>
-
-          {slug && (
-            <button 
-              onClick={() => window.open(`/p/${slug}`, '_blank')}
-              className="app-btn-accent flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-semibold transition-all duration-200 active:scale-95 group shrink-0 cursor-pointer"
-            >
-              <Eye className="w-4 h-4" />
-              <span>Ver Meu Site</span>
-              <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-            </button>
-          )}
+          <h2 className="leading-[0.98]">
+            <span className="block text-3xl sm:text-4xl font-sans font-extrabold text-white tracking-tighter">Bem-vindo de volta,</span>
+            <span className="block text-3xl sm:text-4xl font-display italic font-light bg-[image:var(--app-accent-gradient)] bg-clip-text text-transparent">{photographerName}.</span>
+          </h2>
+          <p className="text-xs sm:text-sm text-neutral-400 font-light max-w-xl leading-relaxed">
+            Todas as fotos, depoimentos e álbuns publicados aqui refletem instantaneamente no seu site público.
+          </p>
         </div>
+
+        {slug && (
+          <button 
+            onClick={() => window.open(`/p/${slug}`, '_blank')}
+            className="app-btn-accent flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-semibold transition-all duration-200 active:scale-95 hover:-translate-y-0.5 shadow-[0_8px_24px_-8px_rgba(var(--app-accent-rgb),0.5)] group shrink-0 cursor-pointer"
+          >
+            <Eye className="w-4 h-4" />
+            <span>Ver Meu Site</span>
+            <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          </button>
+        )}
       </div>
 
       {/* Trial / plan status banner */}
@@ -264,115 +263,102 @@ export default function DashboardTab({ userId, photographerName, onTabChange }: 
         </div>
       )}
 
-      {/* Interactive Quick Action Shortcuts */}
+      {/* Overview — one asymmetric bento instead of two separate rows of
+          near-duplicate boxes (a "Fotos" stat card AND a "Fotos" action
+          card said almost the same thing twice). Each tile now carries
+          both the number and the action it leads to, so the eye has fewer,
+          denser, more meaningful stops instead of eight look-alike panels. */}
       <div className="space-y-3">
-        <h3 className="font-display italic text-lg text-white/90 font-medium">Ações de Acesso Rápido</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <button 
+        <h3 className="font-display italic text-lg text-white/90 font-medium">Visão Geral</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Fotos — hero tile, spans two columns */}
+          <button
             onClick={() => onTabChange?.('fotos')}
-            className="chrome-hairline-top chrome-card-hover p-5 rounded-2xl border border-white/5 bg-neutral-950/40 hover:bg-indigo-500/[0.04] hover:border-indigo-500/30 text-left transition-all duration-200 group relative overflow-hidden cursor-pointer"
+            className="sm:col-span-2 lg:col-span-2 chrome-hairline-top chrome-card-hover text-left p-6 rounded-3xl border border-white/10 bg-white/[0.02] hover:border-[var(--app-accent)]/30 hover:bg-white/[0.03] transition-all duration-300 group relative overflow-hidden cursor-pointer flex flex-col justify-between min-h-[176px]"
           >
-            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 mb-4 group-hover:scale-110 transition-transform">
-              <Camera className="w-5 h-5" />
+            <div className="flex items-start justify-between">
+              <div className="w-11 h-11 rounded-2xl bg-white/5 flex items-center justify-center text-zinc-300 group-hover:text-[var(--app-accent)] transition-colors">
+                <Camera className="w-5 h-5" />
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-neutral-600 group-hover:text-[var(--app-accent)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
             </div>
-            <span className="block font-sans text-[10px] tracking-widest text-indigo-400 font-semibold uppercase mb-1">FOTOS</span>
-            <span className="block text-sm font-semibold text-white">Carregar Imagens</span>
-            <p className="text-[10px] text-neutral-500 mt-1">Upload e gerenciamento em lote</p>
+            <div>
+              <p className="font-display italic text-5xl text-white font-semibold leading-none mb-2">{photosCount}</p>
+              <p className="text-xs font-sans uppercase tracking-wider text-neutral-500">Fotos no acervo</p>
+              <p className="text-[11px] text-neutral-600 group-hover:text-neutral-400 transition-colors mt-2">Carregar novas imagens →</p>
+            </div>
           </button>
 
-          <button 
+          {/* Álbuns */}
+          <button
             onClick={() => onTabChange?.('albuns')}
-            className="chrome-hairline-top chrome-card-hover p-5 rounded-2xl border border-white/5 bg-neutral-950/40 hover:bg-emerald-500/[0.04] hover:border-emerald-500/30 text-left transition-all duration-200 group relative overflow-hidden cursor-pointer"
+            className="chrome-hairline-top chrome-card-hover text-left p-6 rounded-3xl border border-white/10 bg-white/[0.02] hover:border-[var(--app-accent)]/30 hover:bg-white/[0.03] transition-all duration-300 group relative overflow-hidden cursor-pointer flex flex-col justify-between min-h-[176px]"
           >
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 mb-4 group-hover:scale-110 transition-transform">
-              <FolderHeart className="w-5 h-5" />
+            <div className="flex items-start justify-between">
+              <div className="w-11 h-11 rounded-2xl bg-white/5 flex items-center justify-center text-zinc-300 group-hover:text-[var(--app-accent)] transition-colors">
+                <FolderHeart className="w-5 h-5" />
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-neutral-600 group-hover:text-[var(--app-accent)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
             </div>
-            <span className="block font-sans text-[10px] tracking-widest text-emerald-400 font-semibold uppercase mb-1">ÁLBUNS</span>
-            <span className="block text-sm font-semibold text-white">Criar Novo Álbum</span>
-            <p className="text-[10px] text-neutral-500 mt-1">Organize ensaios e coleções</p>
+            <div>
+              <p className="font-display italic text-4xl text-white font-semibold leading-none mb-2">{publishedAlbumsCount}</p>
+              <p className="text-xs font-sans uppercase tracking-wider text-neutral-500">de {albums.length} álbuns publicados</p>
+            </div>
           </button>
 
-          <button 
+          {/* Categorias */}
+          <button
             onClick={() => onTabChange?.('categorias')}
-            className="chrome-hairline-top chrome-card-hover p-5 rounded-2xl border border-white/5 bg-neutral-950/40 hover:bg-purple-500/[0.04] hover:border-purple-500/30 text-left transition-all duration-200 group relative overflow-hidden cursor-pointer"
+            className="chrome-hairline-top chrome-card-hover text-left p-6 rounded-3xl border border-white/10 bg-white/[0.02] hover:border-[var(--app-accent)]/30 hover:bg-white/[0.03] transition-all duration-300 group relative overflow-hidden cursor-pointer flex flex-col justify-between min-h-[176px]"
           >
-            <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 mb-4 group-hover:scale-110 transition-transform">
-              <Tags className="w-5 h-5" />
+            <div className="flex items-start justify-between">
+              <div className="w-11 h-11 rounded-2xl bg-white/5 flex items-center justify-center text-zinc-300 group-hover:text-[var(--app-accent)] transition-colors">
+                <Tags className="w-5 h-5" />
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-neutral-600 group-hover:text-[var(--app-accent)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
             </div>
-            <span className="block font-sans text-[10px] tracking-widest text-purple-400 font-semibold uppercase mb-1">CATEGORIAS</span>
-            <span className="block text-sm font-semibold text-white">Definir Nichos</span>
-            <p className="text-[10px] text-neutral-500 mt-1">Filtros especiais no portfolio</p>
+            <div>
+              <p className="font-display italic text-4xl text-white font-semibold leading-none mb-2">{categoriesServed}</p>
+              <p className="text-xs font-sans uppercase tracking-wider text-neutral-500">nichos ativos — definir mais →</p>
+            </div>
           </button>
 
-          <button 
+          {/* Armazenamento — informational, not a nav shortcut, so it's a div not a button */}
+          <div className="sm:col-span-2 lg:col-span-2 chrome-hairline-top p-6 rounded-3xl border border-white/10 bg-white/[0.02] flex flex-col justify-between min-h-[176px]">
+            <div className="flex items-start justify-between">
+              <div className="w-11 h-11 rounded-2xl bg-white/5 flex items-center justify-center text-zinc-300">
+                <HardDrive className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] font-sans uppercase text-neutral-500 tracking-wider">{planLimits.isTrial ? 'Plano Teste' : 'Plano Pro'}</span>
+            </div>
+            <div>
+              <p className="font-display italic text-3xl text-white font-semibold mb-3">
+                {formatStorageAmount(storageUsedBytes)} <span className="text-sm text-neutral-500 font-sans not-italic">/ {planLimits.storageLimitGB} GB</span>
+              </p>
+              <div className="w-full h-1.5 rounded-full bg-neutral-900 overflow-hidden mb-1.5">
+                <div 
+                  className={`h-full transition-all duration-300 ${percentUsed >= 90 ? 'bg-red-500/80' : percentUsed >= 75 ? 'bg-zinc-400' : 'bg-white'}`}
+                  style={{ width: `${percentUsed <= 0 ? 0 : Math.max(1.5, Math.min(100, percentUsed))}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-neutral-500">{Math.max(0, Math.round(100 - percentUsed))}% de espaço livre</p>
+            </div>
+          </div>
+
+          {/* Perfil */}
+          <button
             onClick={() => onTabChange?.('perfil')}
-            className="chrome-hairline-top chrome-card-hover p-5 rounded-2xl border border-white/5 bg-neutral-950/40 hover:bg-white/[0.03] hover:border-[var(--app-accent)]/30 text-left transition-all duration-200 group relative overflow-hidden cursor-pointer"
+            className="sm:col-span-2 lg:col-span-2 chrome-hairline-top chrome-card-hover text-left p-6 rounded-3xl border border-white/10 bg-white/[0.02] hover:border-[var(--app-accent)]/30 hover:bg-white/[0.03] transition-all duration-300 group relative overflow-hidden cursor-pointer flex items-center justify-between gap-4 min-h-[176px]"
           >
-            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-zinc-300 mb-4 group-hover:scale-110 transition-transform">
-              <Sparkles className="w-5 h-5" />
+            <div>
+              <div className="w-11 h-11 rounded-2xl bg-white/5 flex items-center justify-center text-zinc-300 group-hover:text-[var(--app-accent)] transition-colors mb-4">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <p className="text-sm font-semibold text-white mb-1">Editar Minha Bio</p>
+              <p className="text-[11px] text-neutral-500">Equipamentos, especialidades e história pessoal</p>
             </div>
-            <span className="block font-sans text-[10px] tracking-widest text-zinc-300 font-semibold uppercase mb-1">PERFIL</span>
-            <span className="block text-sm font-semibold text-white">Editar Minha Bio</span>
-            <p className="text-[10px] text-neutral-500 mt-1">Equipamentos e especialidades</p>
+            <ArrowUpRight className="w-5 h-5 text-neutral-600 group-hover:text-[var(--app-accent)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0" />
           </button>
-        </div>
-      </div>
-
-      {/* Stats row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1 */}
-        <div className="chrome-hairline-top chrome-card-hover p-6 rounded-2xl border border-emerald-500/10 bg-emerald-500/[0.01] hover:border-emerald-500/20 transition-all">
-          <div className="flex justify-between items-start mb-4">
-            <span className="text-[10px] font-sans uppercase text-neutral-400 tracking-wider font-semibold">Álbuns Publicados</span>
-            <FolderHeart className="w-4 h-4 text-emerald-400" />
-          </div>
-          <p className="font-display italic text-4xl text-white font-semibold">{publishedAlbumsCount}</p>
-          <p className="text-[9px] text-neutral-500 uppercase tracking-wider font-sans mt-2">de {albums.length} álbuns criados</p>
-        </div>
-
-        {/* Card 2 */}
-        <div className="chrome-hairline-top chrome-card-hover p-6 rounded-2xl border border-purple-500/10 bg-purple-500/[0.01] hover:border-purple-500/20 transition-all">
-          <div className="flex justify-between items-start mb-4">
-            <span className="text-[10px] font-sans uppercase text-neutral-400 tracking-wider font-semibold">Fotos no Acervo</span>
-            <Camera className="w-4 h-4 text-purple-400" />
-          </div>
-          <p className="font-display italic text-4xl text-white font-semibold">{photosCount}</p>
-          <p className="text-[9px] text-neutral-500 uppercase tracking-wider font-sans mt-2">Prontas para exibição</p>
-        </div>
-
-        {/* Card 3 */}
-        <div className="chrome-hairline-top chrome-card-hover p-6 rounded-2xl border border-blue-500/10 bg-blue-500/[0.01] hover:border-blue-500/20 transition-all">
-          <div className="flex justify-between items-start mb-4">
-            <span className="text-[10px] font-sans uppercase text-neutral-400 tracking-wider font-semibold">Categorias Ativas</span>
-            <Tags className="w-4 h-4 text-blue-400" />
-          </div>
-          <p className="font-display italic text-4xl text-white font-semibold">{categoriesServed}</p>
-          <p className="text-[9px] text-neutral-500 uppercase tracking-wider font-sans mt-2">nichos de atuação</p>
-        </div>
-
-        {/* Card 4 - Storage and limits */}
-        <div className="chrome-hairline-top chrome-card-hover p-6 rounded-2xl border border-white/10 bg-white/[0.01] flex flex-col justify-between hover:border-white/15 transition-all">
-          <div>
-            <div className="flex justify-between items-start mb-4">
-              <span className="text-[10px] font-sans uppercase text-neutral-400 tracking-wider font-semibold">Seu Armazenamento</span>
-              <HardDrive className="w-4 h-4 text-zinc-300" />
-            </div>
-            <p className="font-display italic text-xl text-white font-semibold mb-2">
-              {formatStorageAmount(storageUsedBytes)}
-            </p>
-          </div>
-          <div>
-            <div className="w-full h-1.5 rounded-full bg-neutral-900 overflow-hidden mb-1">
-              <div 
-                className={`h-full transition-all duration-300 ${percentUsed >= 90 ? 'bg-red-500/80' : percentUsed >= 75 ? 'bg-zinc-400' : 'bg-white'}`}
-                style={{ width: `${percentUsed <= 0 ? 0 : Math.max(1.5, Math.min(100, percentUsed))}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-[9px] font-sans text-neutral-500">
-              <span>{planLimits.isTrial ? 'Plano Teste Grátis' : 'Plano Pro'}</span>
-              <span>{planLimits.storageLimitGB} GB total</span>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -381,11 +367,16 @@ export default function DashboardTab({ userId, photographerName, onTabChange }: 
         {/* Dynamic Photo upload analytics SVG line area chart */}
         <div className="chrome-hairline-top p-6 rounded-3xl border border-white/5 bg-neutral-950/40 lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between border-b border-white/5 pb-4">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-zinc-300" />
-              <h4 className="font-display italic text-lg text-white">Histórico de Obras Criadas</h4>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <TrendingUp className="w-4 h-4 text-zinc-300" />
+                <h4 className="font-display italic text-lg text-white">Histórico de Obras Criadas</h4>
+              </div>
+              <p className="text-[11px] text-neutral-500 font-sans">
+                <span className="text-white font-semibold">{chartData.reduce((s, d) => s + d.count, 0)}</span> fotos adicionadas nos últimos 6 meses
+              </p>
             </div>
-            <span className="text-[9px] font-sans font-semibold uppercase bg-white/10 text-zinc-300 px-2 py-0.5 rounded">6 meses</span>
+            <span className="text-[9px] font-sans font-semibold uppercase bg-white/10 text-zinc-300 px-2 py-0.5 rounded shrink-0">6 meses</span>
           </div>
 
           <div className="relative pt-4 flex justify-center">
@@ -470,7 +461,7 @@ export default function DashboardTab({ userId, photographerName, onTabChange }: 
         <div className="chrome-hairline-top p-6 rounded-3xl border border-white/5 bg-neutral-950/40 space-y-4">
           <div className="border-b border-white/5 pb-4">
             <div className="flex items-center gap-2">
-              <Activity className="w-4 h-4 text-purple-400" />
+              <Activity className="w-4 h-4 text-zinc-300" />
               <h4 className="font-display italic text-lg text-white">Foco por Nicho</h4>
             </div>
           </div>
@@ -489,16 +480,16 @@ export default function DashboardTab({ userId, photographerName, onTabChange }: 
               {categoryStats.map((item, idx) => {
                 const percent = Math.round((item.count / totalCatPhotos) * 100);
                 const colors = [
-                  'bg-zinc-300',
-                  'bg-indigo-500',
-                  'bg-emerald-500',
-                  'bg-pink-500'
+                  'bg-white',
+                  'bg-[var(--app-accent)]',
+                  'bg-zinc-400',
+                  'bg-zinc-600'
                 ];
                 const textColors = [
-                  'text-zinc-300 bg-white/10',
-                  'text-indigo-400 bg-indigo-400/10',
-                  'text-emerald-400 bg-emerald-400/10',
-                  'text-pink-400 bg-pink-400/10'
+                  'text-white bg-white/10',
+                  'text-[var(--app-accent)] bg-[var(--app-accent)]/10',
+                  'text-zinc-400 bg-zinc-400/10',
+                  'text-zinc-500 bg-zinc-500/10'
                 ];
                 const colorClass = colors[idx % colors.length];
                 const bgTextClass = textColors[idx % textColors.length];
@@ -506,7 +497,10 @@ export default function DashboardTab({ userId, photographerName, onTabChange }: 
                 return (
                   <div key={item.name} className="space-y-1.5">
                     <div className="flex justify-between items-center text-xs">
-                      <span className="font-semibold text-neutral-300">{item.name}</span>
+                      <span className="flex items-center gap-2 font-semibold text-neutral-300">
+                        <span className="text-[9px] font-sans text-neutral-600 tabular-nums">{String(idx + 1).padStart(2, '0')}</span>
+                        {item.name}
+                      </span>
                       <span className={`text-[9px] font-sans px-2 py-0.5 rounded font-semibold uppercase ${bgTextClass}`}>{percent}%</span>
                     </div>
                     <div className="w-full h-2 rounded-full bg-neutral-900 overflow-hidden">
@@ -515,7 +509,7 @@ export default function DashboardTab({ userId, photographerName, onTabChange }: 
                         style={{ width: `${percent}%` }}
                       />
                     </div>
-                    <span className="block text-[9px] font-sans text-neutral-500 uppercase">{item.count} fotos cadastradas</span>
+                    <span className="block text-[9px] font-sans text-neutral-500 uppercase pl-[19px]">{item.count} fotos cadastradas</span>
                   </div>
                 );
               })}
@@ -531,58 +525,37 @@ export default function DashboardTab({ userId, photographerName, onTabChange }: 
           <span className="text-xs font-sans text-neutral-500 uppercase">Total: {photosCount} fotos</span>
         </div>
         
-        <div className="chrome-hairline-top border border-white/5 bg-neutral-950/20 rounded-2xl overflow-hidden shadow-sm">
-          <table className="w-full text-left border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-white/5 bg-neutral-950/40">
-                <th className="p-4 text-[10px] font-sans uppercase text-neutral-500 tracking-wider w-16">Foto</th>
-                <th className="p-4 text-[10px] font-sans uppercase text-neutral-500 tracking-wider">Título</th>
-                <th className="p-4 text-[10px] font-sans uppercase text-neutral-500 tracking-wider">Álbum Associado</th>
-                <th className="p-4 text-[10px] font-sans uppercase text-neutral-500 tracking-wider w-36">Data de Envio</th>
-                <th className="p-4 text-[10px] font-sans uppercase text-neutral-500 tracking-wider w-24 text-right">Ação</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentPhotos.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="p-8 text-center text-neutral-500 font-sans text-xs">
-                    Nenhuma foto enviada ainda. Use a aba "Fotos" para carregar novas imagens.
-                  </td>
-                </tr>
-              ) : (
-                recentPhotos.map((photo: any) => (
-                  <tr key={photo.id} className="border-b border-white/5 hover:bg-white/[0.01] transition-colors group">
-                    <td className="p-4">
-                      <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-white/10 group-hover:border-white/40 transition-colors">
-                        <img 
-                          src={photo.thumbnail_url} 
-                          alt={photo.title || ''} 
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                    </td>
-                    <td className="p-4 font-semibold text-neutral-200">
-                      {photo.title || '(sem título)'}
-                    </td>
-                    <td className="p-4 text-neutral-400">
-                      {photo.album_title}
-                    </td>
-                    <td className="p-4 text-neutral-500 font-sans text-xs">
-                      {new Date(photo.created_at).toLocaleDateString('pt-BR')}
-                    </td>
-                    <td className="p-4 text-right">
-                      <button 
-                        onClick={() => setPreviewPhoto(photo)}
-                        className="text-xs font-medium text-neutral-400 hover:text-white transition-colors cursor-pointer"
-                      >
-                        Visualizar
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        <div className="chrome-hairline-top border border-white/5 bg-neutral-950/20 rounded-2xl overflow-hidden shadow-sm divide-y divide-white/5">
+          {recentPhotos.length === 0 ? (
+            <div className="p-8 text-center text-neutral-500 font-sans text-xs">
+              Nenhuma foto enviada ainda. Use a aba "Fotos" para carregar novas imagens.
+            </div>
+          ) : (
+            recentPhotos.map((photo: any, idx) => (
+              <button
+                key={photo.id}
+                onClick={() => setPreviewPhoto(photo)}
+                className="w-full flex items-center gap-3 sm:gap-4 p-3.5 sm:p-4 hover:bg-white/[0.02] transition-colors group text-left cursor-pointer"
+              >
+                <span className="hidden sm:block text-[9px] font-sans text-neutral-600 tabular-nums w-4 shrink-0">{String(idx + 1).padStart(2, '0')}</span>
+                <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-lg overflow-hidden border border-white/10 group-hover:border-white/40 transition-colors shrink-0">
+                  <img 
+                    src={photo.thumbnail_url} 
+                    alt={photo.title || ''} 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-neutral-200 truncate">{photo.title || '(sem título)'}</p>
+                  <p className="text-xs text-neutral-500 truncate">
+                    {photo.album_title} <span className="text-neutral-700 mx-1">•</span> {new Date(photo.created_at).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+                <span className="hidden sm:inline text-xs font-medium text-neutral-500 group-hover:text-white transition-colors shrink-0">Visualizar</span>
+                <ArrowUpRight className="w-3.5 h-3.5 text-neutral-600 group-hover:text-[var(--app-accent)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0" />
+              </button>
+            ))
+          )}
         </div>
       </div>
 

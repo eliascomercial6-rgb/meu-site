@@ -288,3 +288,13 @@
 .animate-float {
   animation: float 5s ease-in-out infinite;
 }
+
+/* Hides the scrollbar on horizontally-scrollable strips (mobile admin nav)
+   while keeping them fully scrollable via touch/trackpad. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

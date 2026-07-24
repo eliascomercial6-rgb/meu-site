@@ -15,7 +15,6 @@ import {
   Settings, 
   ArrowRight, 
   ArrowUpRight,
-  Aperture, 
   X, 
   Eye, 
   Send, 
@@ -36,7 +35,8 @@ import {
   Rocket,
   Handshake,
   Minus,
-  ShieldCheck
+  ShieldCheck,
+  Menu
 } from 'lucide-react';
 
 /**
@@ -44,7 +44,7 @@ import {
  * No animation library dependency; keeps the "Apple-like" progressive reveal
  * feel described in the design brief without adding new packages.
  */
-function Reveal({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
+function Reveal({ children, delay = 0, className = '' }: { children: React.ReactNode | ((visible: boolean) => React.ReactNode); delay?: number; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -69,45 +69,74 @@ function Reveal({ children, delay = 0, className = '' }: { children: React.React
       className={`transition-all duration-[1800ms] ${visible ? 'opacity-100 translate-y-0 blur-0' : 'opacity-0 translate-y-4 blur-[2px]'} ${className}`}
       style={{ transitionDelay: `${delay}ms`, transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)' }}
     >
-      {children}
+      {typeof children === 'function' ? children(visible) : children}
     </div>
   );
 }
 
-/** CountUp — animates a number from 0 to `value` once it scrolls into view. */
-function CountUp({ value, suffix = '', duration = 1400 }: { value: number; suffix?: string; duration?: number }) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const [display, setDisplay] = useState(0);
-  const [started, setStarted] = useState(false);
+/**
+ * MarcaAutoralCard — the "Diferenciais" centerpiece card. The metallic
+ * shimmer no longer loops forever — it plays through once, either when the
+ * card first scrolls into view (tied to Reveal's own IntersectionObserver
+ * visibility) or when the user hovers it, then settles back to a static
+ * silver fill until triggered again.
+ */
+function MarcaAutoralCard({ visible }: { visible: boolean }) {
+  const [sweepKey, setSweepKey] = useState(0);
+  const wasVisible = useRef(false);
 
   useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && !started) {
-            setStarted(true);
-            const start = performance.now();
-            const tick = (now: number) => {
-              const progress = Math.min(1, (now - start) / duration);
-              const eased = 1 - Math.pow(1 - progress, 3);
-              setDisplay(Math.round(value * eased));
-              if (progress < 1) requestAnimationFrame(tick);
-            };
-            requestAnimationFrame(tick);
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.4 }
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [value, duration, started]);
+    if (visible && !wasVisible.current) {
+      setSweepKey((k) => k + 1);
+    }
+    wasVisible.current = visible;
+  }, [visible]);
 
-  return <span ref={ref}>{display.toLocaleString('pt-BR')}{suffix}</span>;
+  return (
+    <div
+      onMouseEnter={() => setSweepKey((k) => k + 1)}
+      key={sweepKey}
+      className="relative p-8 rounded-[1.75rem] border border-transparent hover:border-white/25 bg-[image:var(--app-accent-gradient)] flex flex-col aspect-[4/5.3] overflow-hidden shadow-[0_20px_45px_-15px_rgba(0,0,0,0.55)] hover:shadow-[0_20px_45px_-15px_rgba(0,0,0,0.55),0_0_0_1px_rgba(255,255,255,0.12)] transition-[border-color,box-shadow] duration-500 ease-out"
+      style={{
+        backgroundSize: '250% 250%',
+        backgroundPosition: '0% 50%',
+        animation: sweepKey > 0 ? 'silverShimmerSweep 1.6s ease-in-out 1 forwards' : 'none',
+      }}
+    >
+      <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-black/20 blur-2xl" />
+      <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center">
+        <Settings className="w-6 h-6 text-[var(--app-accent-ink)]" />
+      </div>
+
+      <div className="relative flex-1 min-h-[92px] my-6 rounded-xl border border-white/15 bg-black/25 p-4 flex flex-col justify-between">
+        <span className="font-display italic text-lg text-[var(--app-accent-ink)]/90">Aa</span>
+        <div className="flex items-center gap-2">
+          <span className="w-5 h-5 rounded-full border border-white/25 bg-[#2A2E34]" />
+          <span className="w-5 h-5 rounded-full border border-white/25 bg-[#C3C9D1]" />
+          <span className="w-5 h-5 rounded-full border border-white/25 bg-white" />
+          <span className="text-[9px] text-[var(--app-accent-ink)]/70 ml-auto">#HEX</span>
+        </div>
+      </div>
+
+      <div className="relative">
+        <h3 className="font-display italic text-3xl text-[var(--app-accent-ink)] mb-2">Marca Autoral</h3>
+        <p className="text-[var(--app-accent-ink)]/70 text-xs sm:text-sm leading-relaxed font-light mb-4">
+          Customize seu logo, favicon, retrato pessoal de perfil e escolha sua cor de destaque (Hex) para garantir uma identidade visual totalmente coesa e refinada.
+        </p>
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--app-accent-ink)]">
+          Saiba mais <ArrowRight className="w-3.5 h-3.5" />
+        </span>
+      </div>
+    </div>
+  );
 }
+
+// Focus wordmark (dark-ink variant) embedded as a data URI so it renders
+// immediately regardless of whether the PNG asset has been copied into the
+// project's public folder yet. Used in the comparison table's Focus column,
+// which sits on a light silver gradient background (needs the dark variant
+// for contrast, unlike the light/silver wordmark used in the navbar/footer).
+const FOCUS_LOGO_INK = 'data:image/png;base64,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';
 
 interface SaasLandingPageProps {
   onNavigateToAdmin: () => void;
@@ -313,13 +342,18 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
   const [navScrolled, setNavScrolled] = useState(false);
   const [fullBarVisible, setFullBarVisible] = useState(true);
   const [pillBarVisible, setPillBarVisible] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    const NAV_TRIGGER_DELAY_MS = 400; // pause before the scroll crossing even starts the swap
+    const NAV_TRIGGER_DELAY_MS = 30; // pause before the scroll crossing even starts the swap
     let delayTimeout: ReturnType<typeof setTimeout> | null = null;
 
     const handleScroll = () => {
-      const scrolled = window.scrollY > 80;
+      // Lowered from 80px: with the heavier wheel sensitivity below (0.4x),
+      // 80px of real scroll took a lot of physical wheel movement to reach,
+      // making the original bar feel like it never disappeared. 24px keeps
+      // the crossfade trigger responsive without firing on a stray scroll.
+      const scrolled = window.scrollY > 24;
       if (delayTimeout) clearTimeout(delayTimeout);
       delayTimeout = setTimeout(() => setNavScrolled(scrolled), NAV_TRIGGER_DELAY_MS);
     };
@@ -332,9 +366,28 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
     };
   }, []);
 
+  const headerMountedRef = useRef(false);
+
   useEffect(() => {
-    const FADE_MS = 300; // how long each bar takes to fade out/in
-    const GAP_MS = 200; // extra pause with neither bar visible, between the two fades
+    const FADE_MS = 110; // how long each bar takes to fade out/in
+    const GAP_MS = 25; // extra pause with neither bar visible, between the two fades
+
+    // On first mount, show the correct bar immediately — no crossfade wait.
+    // Without this, the original (full) header sat invisible for FADE_MS+GAP_MS
+    // before appearing, since the effect always used to route through the
+    // delayed branch even on initial render.
+    if (!headerMountedRef.current) {
+      headerMountedRef.current = true;
+      if (navScrolled) {
+        setFullBarVisible(false);
+        setPillBarVisible(true);
+      } else {
+        setPillBarVisible(false);
+        setFullBarVisible(true);
+      }
+      return;
+    }
+
     let swapTimeout: ReturnType<typeof setTimeout> | null = null;
 
     if (navScrolled) {
@@ -357,6 +410,7 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
   useEffect(() => {
     const SCROLL_SENSITIVITY = 0.4; // lower = heavier/less sensitive, higher = faster
     const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey) return; // pinch-to-zoom / ctrl+scroll zoom — let the browser handle it natively
       e.preventDefault();
       window.scrollBy(0, e.deltaY * SCROLL_SENSITIVITY);
     };
@@ -409,14 +463,41 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
 
   return (
     <div
-      className="min-h-screen bg-[#050506] text-neutral-100 font-sans selection:bg-white/10 selection:text-zinc-200 overflow-x-hidden relative"
-      style={{ zoom: 0.9 }}
+      className="min-h-screen bg-[#08080a] text-neutral-100 font-sans selection:bg-white/10 selection:text-zinc-200 overflow-x-hidden relative"
+      style={{
+        // Local redesign palette: warm copper/amber replacing the previous
+        // silver accent. Scoped to this component's subtree only — the
+        // shared --app-accent variable used elsewhere in the app (admin
+        // panel, etc.) is untouched.
+        //
+        // IMPORTANT: --app-accent-gradient (used by the shared .app-btn-accent
+        // class) and --app-accent-ink are ALSO overridden here. Without this,
+        // every "orange" button/badge on this page silently falls back to the
+        // global silver gradient defined in index.css, which is why the
+        // header CTA looked colorless before. The gradient itself deliberately
+        // runs through near-black before hitting orange — a solid orange fill
+        // reads flat/plasticky; blending with black gives it the brushed-metal,
+        // "copper catching light" look instead.
+        '--app-accent': '#DCE3EA',
+        '--app-accent-dim': '#9AA3AF',
+        '--app-accent-rgb': '220,227,234',
+        '--app-accent-ink': '#0B0D10',
+        '--app-accent-gradient': 'linear-gradient(120deg, #2A2E34 0%, #7B8492 18%, #C3C9D1 34%, #FFFFFF 46%, #EBEFF2 54%, #FFFFFF 66%, #9AA3AF 80%, #4B515A 100%)',
+      } as React.CSSProperties}
     >
-      {/* Native scrollbar hidden — scrolling is now driven by the wheel
-          handler above, so the default/visual scrollbar track+thumb would
-          just be a distraction (and wouldn't reflect the custom feel).
-          Scrolling itself keeps working exactly the same, it's purely
-          hidden. Section-seam smoothing kept as-is. */}
+      {/* Fine grain — a hallmark of premium, filmic surfaces vs. flat
+          digital gradients. Extremely subtle, applied once at the root. */}
+      <div
+        className="pointer-events-none fixed inset-0 z-[60] opacity-[0.035] mix-blend-overlay"
+        style={{
+          backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+        }}
+      />
+      {/* Native scrollbar hidden — with the track set to nearly the same tone
+          as the page background, only the thumb was visible, floating on its
+          own like a stray rectangle near the edge (the "ghost square" reported
+          near Como Funciona). Scrolling itself is handled by the wheel
+          handler above regardless, so the native bar isn't needed. */}
       <style>{`
         html, body {
           scrollbar-width: none;
@@ -437,15 +518,29 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
           position: relative;
           z-index: 1;
         }
+        @keyframes silverShimmerSweep {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 100% 50%; }
+        }
+        @keyframes gentleFloat {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-6px); }
+        }
+        @keyframes gentleFloatReverse {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(6px); }
+        }
       `}</style>
 
-      {/* Chrome hairline at the very top */}
-      <div className="fixed bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[var(--app-accent)]/60 to-transparent z-50" />
-
-      {/* Decorative Glowing Orbs */}
-      <div className="absolute top-[-10%] left-[20%] w-[520px] h-[520px] rounded-full bg-[var(--app-accent)]/[0.018] blur-[130px] pointer-events-none" />
-      <div className="absolute top-[35%] right-[-10%] w-[440px] h-[440px] rounded-full bg-zinc-900/[0.025] blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-[10%] left-[-10%] w-[360px] h-[360px] rounded-full bg-[var(--app-accent)]/[0.018] blur-[110px] pointer-events-none" />
+      {/* Decorative Glowing Orbs — anchored with vh units, not %. The root
+          container's height is the full page scroll height (not one
+          viewport), so a percentage-based top/bottom placed these blobs
+          far down the page instead of near the hero where they belong.
+          This was the actual "ghost square" — a large, heavily blurred
+          circle landing in an unrelated section further down. */}
+      <div className="absolute top-[-10vh] left-[20%] w-[520px] h-[520px] rounded-full bg-[var(--app-accent)]/[0.018] blur-[130px] pointer-events-none" />
+      <div className="absolute top-[35vh] right-[-10%] w-[440px] h-[440px] rounded-full bg-zinc-900/[0.025] blur-[150px] pointer-events-none" />
+      <div className="absolute top-[85vh] left-[-10%] w-[360px] h-[360px] rounded-full bg-[var(--app-accent)]/[0.018] blur-[110px] pointer-events-none" />
 
       {/* Header — two entirely separate bars that crossfade instead of one
           bar whose width/shape is continuously animated. Full bar fades out
@@ -454,32 +549,33 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
           back up. */}
       <header
         aria-hidden={!fullBarVisible}
-        className={`fixed top-0 left-0 right-0 z-40 flex justify-center pointer-events-none transition-opacity duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-40 flex justify-center pointer-events-none transition-opacity duration-[110ms] ${
           fullBarVisible ? 'opacity-100' : 'opacity-0'
         }`}
       >
         <div className={`flex items-center justify-between gap-6 h-16 px-6 w-full max-w-7xl ${fullBarVisible ? 'pointer-events-auto' : ''}`}>
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[linear-gradient(135deg,#6B6E76_0%,#F4F5F7_45%,#FFFFFF_55%,#9AA0AA_100%)] p-[1.5px] flex items-center justify-center shadow-[0_0_18px_rgba(231,233,236,0.25)]">
-              <div className="w-full h-full rounded-xl bg-black flex items-center justify-center">
-                <Aperture className="w-4.5 h-4.5 text-zinc-200" />
-              </div>
-            </div>
-            <span className="font-display italic text-xl font-light tracking-tight text-white">FocusPortfolio</span>
-          </div>
+          <img src="/focus-logo-metallic.png" alt="FocusPortfolio" className="h-5 sm:h-[22px] w-auto" loading="eager" fetchPriority="high" />
 
-          <div className="flex items-center gap-4 sm:gap-6">
+          <div className="flex items-center gap-3 sm:gap-6">
             <button
               onClick={() => { window.location.href = '/admin/login'; }}
-              className="hidden sm:block text-neutral-400 hover:text-white font-medium text-sm transition-colors duration-200"
+              className="hidden sm:block text-neutral-400 hover:text-[var(--app-accent)] font-medium text-sm transition-colors duration-200"
             >
               Acessar Painel
             </button>
             <button
               onClick={() => { window.location.href = '/cadastro'; }}
-              className="app-btn-accent px-5 py-2.5 rounded-xl text-xs font-semibold hover:brightness-105 active:scale-95 transition-all duration-200 flex items-center gap-2"
+              className="hidden sm:flex app-btn-accent px-5 py-2.5 rounded-xl text-xs font-semibold hover:brightness-105 active:scale-95 transition-all duration-200 items-center gap-2 shadow-[0_6px_20px_-6px_rgba(var(--app-accent-rgb),0.6)]"
             >
               Criar Portfólio <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setMobileMenuOpen((v) => !v)}
+              aria-label="Abrir menu"
+              aria-expanded={mobileMenuOpen}
+              className="sm:hidden w-9 h-9 rounded-lg border border-white/10 bg-white/[0.04] flex items-center justify-center text-white active:scale-95 transition-all duration-200"
+            >
+              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>
           </div>
         </div>
@@ -487,139 +583,360 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
 
       <header
         aria-hidden={!pillBarVisible}
-        className={`fixed top-3 left-1/2 -translate-x-1/2 z-40 pointer-events-none transition-opacity duration-300 ${
+        className={`fixed top-3 left-1/2 -translate-x-1/2 z-40 pointer-events-none transition-opacity duration-[110ms] ${
           pillBarVisible ? 'opacity-100' : 'opacity-0'
         }`}
       >
         <div
-          className={`flex items-center justify-between gap-6 h-16 px-6 w-[94vw] sm:w-auto sm:min-w-[520px] max-w-2xl rounded-full bg-black/70 backdrop-blur-xl border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.5)] ${
+          className={`flex items-center justify-between gap-5 h-[52px] px-5 w-[94vw] sm:w-auto sm:min-w-[480px] max-w-2xl rounded-full bg-black/70 backdrop-blur-xl border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.5),0_0_0_1px_rgba(var(--app-accent-rgb),0.08)] ${
             pillBarVisible ? 'pointer-events-auto' : ''
           }`}
         >
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[linear-gradient(135deg,#6B6E76_0%,#F4F5F7_45%,#FFFFFF_55%,#9AA0AA_100%)] p-[1.5px] flex items-center justify-center shadow-[0_0_18px_rgba(231,233,236,0.25)]">
-              <div className="w-full h-full rounded-xl bg-black flex items-center justify-center">
-                <Aperture className="w-4.5 h-4.5 text-zinc-200" />
-              </div>
-            </div>
-            <span className="font-display italic text-xl font-light tracking-tight text-white">FocusPortfolio</span>
-          </div>
+          <img src="/focus-mark.png" alt="FocusPortfolio" className="h-6 w-6" />
 
-          <div className="flex items-center gap-4 sm:gap-6">
+          <div className="flex items-center gap-2.5 sm:gap-5">
             <button
               onClick={() => { window.location.href = '/admin/login'; }}
-              className="hidden sm:block text-neutral-400 hover:text-white font-medium text-sm transition-colors duration-200"
+              className="hidden sm:block text-neutral-400 hover:text-[var(--app-accent)] font-medium text-xs transition-colors duration-200"
             >
               Acessar Painel
             </button>
             <button
               onClick={() => { window.location.href = '/cadastro'; }}
-              className="app-btn-accent px-5 py-2.5 rounded-xl text-xs font-semibold hover:brightness-105 active:scale-95 transition-all duration-200 flex items-center gap-2"
+              className="hidden sm:flex app-btn-accent px-4 py-2 rounded-xl text-[11px] font-semibold hover:brightness-105 active:scale-95 transition-all duration-200 items-center gap-1.5 shadow-[0_6px_20px_-6px_rgba(var(--app-accent-rgb),0.6)]"
             >
-              Criar Portfólio <ArrowRight className="w-4 h-4" />
+              Criar Portfólio <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => setMobileMenuOpen((v) => !v)}
+              aria-label="Abrir menu"
+              aria-expanded={mobileMenuOpen}
+              className="sm:hidden w-8 h-8 rounded-lg border border-white/10 bg-white/[0.05] flex items-center justify-center text-white active:scale-95 transition-all duration-200"
+            >
+              {mobileMenuOpen ? <X className="w-3.5 h-3.5" /> : <Menu className="w-3.5 h-3.5" />}
             </button>
           </div>
         </div>
       </header>
 
+      {/* Mobile menu — "Acessar Painel" lives here on small screens since the
+          fixed header has no room for it next to the primary CTA. Shared by
+          both header bars above (only one is ever visible at a time). */}
+      {mobileMenuOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-40 sm:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          <div className="fixed top-16 right-4 z-50 sm:hidden w-56 rounded-2xl glass-card shadow-2xl overflow-hidden animate-fade-in p-2 flex flex-col gap-1.5">
+            <button
+              onClick={() => { window.location.href = '/cadastro'; setMobileMenuOpen(false); }}
+              className="app-btn-accent w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold active:scale-[0.97] transition-all duration-200 shadow-[0_6px_20px_-6px_rgba(var(--app-accent-rgb),0.6)]"
+            >
+              Criar Portfólio <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => { window.location.href = '/admin/login'; setMobileMenuOpen(false); }}
+              className="w-full flex items-center justify-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium text-neutral-300 hover:text-[var(--app-accent)] hover:bg-white/[0.05] transition-colors duration-200"
+            >
+              <Lock className="w-3.5 h-3.5" /> Acessar Painel
+            </button>
+          </div>
+        </>
+      )}
 
-      {/* Hero Section */}
-      <section className="relative pt-28 pb-28 text-center px-6 overflow-hidden">
-        {/* Signature element: aperture rings behind the headline */}
-        <div className="pointer-events-none absolute top-8 left-1/2 -translate-x-1/2 w-[560px] h-[560px] opacity-[0.35]">
-          <div className="absolute inset-0 rounded-full border border-[var(--app-accent)]/20" />
-          <div className="absolute inset-[36px] rounded-full border border-zinc-300/10" />
-          <div className="absolute inset-[72px] rounded-full border border-[var(--app-accent)]/10 [mask-image:radial-gradient(circle_at_center,black_40%,transparent_75%)]" />
+
+      {/* Hero Section — staged as one scene ("Optical Monolith"): a lens mass
+          lit from one side, not a grab-bag of decorative blobs. Every layer
+          below is a consequence of that single light source, kept asymmetric
+          so nothing competes with the headline. */}
+      <section className="relative text-center px-6 overflow-hidden">
+        <div className="hidden sm:block absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Plane 1 — the lens mass itself: a huge, heavily blurred halo,
+              centered behind the headline so the whole scene reads as
+              symmetric around the content instead of pulling to one side. */}
+          <div
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[75%] aspect-square rounded-full blur-[130px] mix-blend-screen"
+            style={{ background: 'radial-gradient(circle, rgba(214,220,228,0.16) 0%, rgba(120,128,140,0.08) 40%, transparent 72%)' }}
+          />
+
+          {/* Plane 2 — studio bloom, centered overhead: the single key light
+              (softbox) everything else in the scene is answering to. */}
+          <div
+            className="absolute -top-[18%] left-1/2 -translate-x-1/2 w-[52%] h-[52%] rounded-full blur-[120px] mix-blend-screen opacity-90"
+            style={{ background: 'radial-gradient(circle, rgba(244,247,250,0.36) 0%, transparent 70%)' }}
+          />
+
+          {/* Plane 3 — the chrome ring. One circle, not two separate rings (the
+              previous version used two independent conic-gradient circles that
+              visually read as a duplicated ring). Only its 9-to-12 and 3-to-6
+              quarters are drawn — a real SVG arc, not a masked full circle —
+              so the geometry is exact. Each arc is three jittered, variously
+              blurred strokes (bloom / mid / crisp core) with a soft fade at
+              both ends instead of a hard cutoff, so it reads as an irregular
+              glint of light on glass rather than a precise digital ring. */}
+          <svg
+            className="absolute inset-0 w-full h-full"
+            viewBox="0 0 1920 800"
+            preserveAspectRatio="xMidYMid slice"
+          >
+            <defs>
+              <linearGradient id="ringArcA" gradientUnits="userSpaceOnUse" x1="500" y1="400" x2="960" y2="-60">
+                <stop offset="0%" stopColor="#fff" stopOpacity="0" />
+                <stop offset="22%" stopColor="#e4e9ee" stopOpacity="0.55" />
+                <stop offset="52%" stopColor="#ffffff" stopOpacity="0.95" />
+                <stop offset="80%" stopColor="#c7ced6" stopOpacity="0.35" />
+                <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+              </linearGradient>
+              <linearGradient id="ringArcB" gradientUnits="userSpaceOnUse" x1="1420" y1="400" x2="960" y2="860">
+                <stop offset="0%" stopColor="#fff" stopOpacity="0" />
+                <stop offset="25%" stopColor="#e2e7ec" stopOpacity="0.5" />
+                <stop offset="55%" stopColor="#f8fafb" stopOpacity="0.85" />
+                <stop offset="82%" stopColor="#c2cad3" stopOpacity="0.35" />
+                <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+
+            {/* Arc A — 9 o'clock to 12 o'clock (upper-left quarter), circle
+                centered at x=960 (the viewBox's true horizontal center) */}
+            <path d="M 508 400 A 452 452 0 0 1 960 -52" fill="none" stroke="url(#ringArcA)" strokeWidth="34" strokeLinecap="round" className="blur-[26px]" />
+            <path d="M 500 400 A 460 460 0 0 1 960 -60" fill="none" stroke="url(#ringArcA)" strokeWidth="12" strokeLinecap="round" className="blur-[6px]" />
+            <path d="M 492 400 A 468 468 0 0 1 960 -68" fill="none" stroke="url(#ringArcA)" strokeWidth="2.5" strokeLinecap="round" className="blur-[0.5px]" />
+
+            {/* Arc B — 3 o'clock to 6 o'clock (lower-right quarter) */}
+            <path d="M 1412 400 A 452 452 0 0 1 960 852" fill="none" stroke="url(#ringArcB)" strokeWidth="30" strokeLinecap="round" className="blur-[24px]" />
+            <path d="M 1420 400 A 460 460 0 0 1 960 860" fill="none" stroke="url(#ringArcB)" strokeWidth="11" strokeLinecap="round" className="blur-[5px]" />
+            <path d="M 1428 400 A 468 468 0 0 1 960 868" fill="none" stroke="url(#ringArcB)" strokeWidth="2.5" strokeLinecap="round" className="blur-[0.5px]" />
+          </svg>
+
+
+          {/* Plane 5 — graphite mass, centered low: the "negative fill" that
+              keeps the composition weighted instead of floating on black. */}
+          <div
+            className="absolute -bottom-[18%] left-1/2 -translate-x-1/2 w-[42%] h-[42%] rounded-full blur-[110px] opacity-50"
+            style={{ background: 'radial-gradient(circle, rgba(52,57,64,0.45) 0%, transparent 70%)' }}
+          />
+
+          {/* Plane 6 — near-invisible film grain: the detail that makes the
+              scene read as photographed rather than drawn. */}
+          <div
+            className="absolute inset-0 opacity-[0.05] mix-blend-overlay"
+            style={{
+              backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+            }}
+          />
         </div>
 
-        <div className="relative max-w-4xl mx-auto">
-          <Reveal>
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-[10px] uppercase font-sans text-zinc-300 tracking-widest mb-8 font-semibold shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)]">
-              <span className="app-badge-dot animate-pulse" /> Curadoria Visual de Alta Performance
-            </div>
-            <h1 className="flex flex-col items-center text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-normal tracking-tight leading-[1.15] mb-8">
-              <span className="whitespace-nowrap font-sans font-bold text-white">Seu trabalho merece</span>
-              <span className="whitespace-nowrap">
-                <span className="font-sans font-bold text-white">um </span>
-                <span className="font-display font-light italic bg-[linear-gradient(100deg,var(--app-accent-dim)_10%,var(--app-accent)_50%,var(--app-accent-dim)_90%)] bg-clip-text text-transparent">
-                  Portfólio Editorial.
+        {/* Mobile scene — the desktop version above reads as almost flat
+            black on a narrow screen (same blur radii over a much smaller
+            element make the glow spread too thin to register). This restages
+            the same "Optical Monolith" idea at mobile scale, but keeps the
+            exact same ring geometry as desktop: one arc from 9 to 12 o'clock
+            (upper-left) and one arc from 3 to 6 o'clock (lower-right),
+            diagonally opposite — not two arcs both closing at the top. */}
+        <div className="sm:hidden absolute inset-0 overflow-hidden pointer-events-none">
+          <div
+            className="absolute left-1/2 top-[46%] -translate-x-1/2 -translate-y-1/2 w-[115%] aspect-square rounded-full blur-[64px] mix-blend-screen"
+            style={{ background: 'radial-gradient(circle, rgba(214,220,228,0.30) 0%, rgba(120,128,140,0.12) 42%, transparent 70%)' }}
+          />
+          <div
+            className="absolute -top-[4%] left-1/2 -translate-x-1/2 w-[58%] h-[24%] rounded-full blur-[42px] mix-blend-screen opacity-95"
+            style={{ background: 'radial-gradient(circle, rgba(244,247,250,0.65) 0%, transparent 72%)' }}
+          />
+
+          {/* Ring — same construction as desktop: only the 9-12 and 3-6
+              quarters are drawn as real SVG arcs (not a masked full circle),
+              each a jittered halo + crisp-core pass, spanning the full
+              section height so the two quarters land far apart vertically
+              instead of both crowding the top. */}
+          <svg
+            className="absolute inset-0 w-full h-full"
+            viewBox="0 0 800 900"
+            preserveAspectRatio="xMidYMid slice"
+          >
+            <defs>
+              <linearGradient id="mobileRingArcA" gradientUnits="userSpaceOnUse" x1="70" y1="420" x2="400" y2="60">
+                <stop offset="0%" stopColor="#fff" stopOpacity="0" />
+                <stop offset="22%" stopColor="#e4e9ee" stopOpacity="0.6" />
+                <stop offset="52%" stopColor="#ffffff" stopOpacity="1" />
+                <stop offset="80%" stopColor="#c7ced6" stopOpacity="0.4" />
+                <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+              </linearGradient>
+              <linearGradient id="mobileRingArcB" gradientUnits="userSpaceOnUse" x1="730" y1="420" x2="400" y2="780">
+                <stop offset="0%" stopColor="#fff" stopOpacity="0" />
+                <stop offset="25%" stopColor="#e2e7ec" stopOpacity="0.55" />
+                <stop offset="55%" stopColor="#f8fafb" stopOpacity="0.9" />
+                <stop offset="82%" stopColor="#c2cad3" stopOpacity="0.4" />
+                <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+
+            {/* Arc A — 9 o'clock to 12 o'clock (upper-left quarter) */}
+            <path d="M 74 420 A 326 326 0 0 1 400 94" fill="none" stroke="url(#mobileRingArcA)" strokeWidth="20" strokeLinecap="round" className="blur-[16px]" />
+            <path d="M 70 420 A 330 330 0 0 1 400 90" fill="none" stroke="url(#mobileRingArcA)" strokeWidth="7" strokeLinecap="round" className="blur-[3.5px]" />
+            <path d="M 66 420 A 334 334 0 0 1 400 86" fill="none" stroke="url(#mobileRingArcA)" strokeWidth="1.75" strokeLinecap="round" className="blur-[0.5px]" />
+
+            {/* Arc B — 3 o'clock to 6 o'clock (lower-right quarter) */}
+            <path d="M 726 420 A 326 326 0 0 1 400 746" fill="none" stroke="url(#mobileRingArcB)" strokeWidth="18" strokeLinecap="round" className="blur-[15px]" />
+            <path d="M 730 420 A 330 330 0 0 1 400 750" fill="none" stroke="url(#mobileRingArcB)" strokeWidth="6.5" strokeLinecap="round" className="blur-[3px]" />
+            <path d="M 734 420 A 334 334 0 0 1 400 754" fill="none" stroke="url(#mobileRingArcB)" strokeWidth="1.75" strokeLinecap="round" className="blur-[0.5px]" />
+          </svg>
+
+          <div
+            className="absolute -bottom-[10%] left-1/2 -translate-x-1/2 w-[62%] h-[24%] rounded-full blur-[58px] opacity-55"
+            style={{ background: 'radial-gradient(circle, rgba(52,57,64,0.55) 0%, transparent 70%)' }}
+          />
+
+          <div
+            className="absolute inset-0 opacity-[0.06] mix-blend-overlay"
+            style={{
+              backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n2'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n2)'/%3E%3C/svg%3E\")",
+            }}
+          />
+        </div>
+
+        {/* Vignette — pulls the eye back to the headline and hides the hard
+            edges of the planes above, then fades into the page background. */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_75%_60%_at_50%_38%,transparent_35%,rgba(8,8,10,0.45)_100%)] sm:bg-[radial-gradient(ellipse_75%_60%_at_50%_38%,transparent_35%,rgba(8,8,10,0.6)_100%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#08080a]/10 via-[#08080a]/55 to-[#08080a] sm:from-[#08080a]/15 sm:via-[#08080a]/75 sm:to-[#08080a] pointer-events-none" />
+
+        <div className="relative flex flex-col items-center justify-center pt-36 pb-24 sm:pb-24 sm:pt-40">
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.05] [mask-image:radial-gradient(ellipse_55%_50%_at_50%_40%,black_0%,transparent_75%)]"
+            style={{
+              backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.35) 1px, transparent 1px)',
+              backgroundSize: '28px 28px',
+            }}
+          />
+          <div className="pointer-events-none absolute top-[38%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[620px] h-[620px] rounded-full bg-[radial-gradient(circle,rgba(var(--app-accent-rgb),0.10)_0%,transparent_65%)] blur-[70px]" />
+
+          <div className="relative max-w-3xl mx-auto">
+            <Reveal>
+              <h1 className="flex flex-col items-center font-normal tracking-tight leading-[1.05] mb-5">
+                <span className="text-4xl sm:text-5xl md:text-5xl font-sans font-extrabold text-white tracking-tighter">Seu trabalho merece</span>
+                <span className="text-4xl sm:text-5xl md:text-5xl">
+                  <span className="font-sans font-extrabold text-white tracking-tighter">um </span>
+                  <span className="font-display font-light italic bg-[linear-gradient(100deg,var(--app-accent-dim)_10%,var(--app-accent)_50%,var(--app-accent-dim)_90%)] bg-clip-text text-transparent">
+                    Portfólio Editorial.
+                  </span>
                 </span>
-              </span>
-            </h1>
-            <p className="text-neutral-400 text-base sm:text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-12 font-light">
-              A plataforma SaaS premium definitiva para fotógrafos autorais que exigem design minimalista, estética cinematográfica de galeria e controle absoluto sobre seu acervo.
-            </p>
+              </h1>
+              <p className="text-neutral-400 text-sm sm:text-base max-w-xl mx-auto leading-relaxed mb-8 font-light">
+                A plataforma SaaS premium definitiva para fotógrafos autorais que exigem design minimalista, estética cinematográfica de galeria e controle absoluto sobre seu acervo.
+              </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <button 
-                onClick={() => handleScrollToSection('planos')}
-                className="app-btn-accent w-full sm:w-auto px-8 py-4 rounded-xl font-semibold active:scale-95 transition-all duration-200 cursor-pointer text-xs hover:brightness-105"
-              >
-                Começar Grátis
-              </button>
-              <button 
-                onClick={() => handleScrollToSection('explorar')}
-                className="w-full sm:w-auto px-8 py-4 rounded-xl font-semibold border border-zinc-800 hover:border-zinc-700 text-white bg-white/5 hover:bg-white/10 active:scale-95 transition-all duration-200 text-xs cursor-pointer"
-              >
-                Explorar Portfólios
-              </button>
-            </div>
-          </Reveal>
-
-          {/* Trust bar — real product facts, not fabricated stats */}
-          <Reveal delay={150}>
-            <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 mt-16 pt-8 border-t border-white/5">
-              <div className="text-center">
-                <p className="font-display italic text-2xl text-white"><CountUp value={14} /> dias</p>
-                <p className="text-[9px] uppercase tracking-wider text-neutral-500 mt-1">Teste grátis, sem cartão</p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                <button 
+                  onClick={() => handleScrollToSection('planos')}
+                  className="app-btn-accent w-full sm:w-auto px-6 py-3 rounded-xl font-semibold active:scale-[0.97] transition-all duration-200 cursor-pointer text-sm shadow-[0_8px_30px_-8px_rgba(var(--app-accent-rgb),0.55)] hover:shadow-[0_10px_36px_-6px_rgba(var(--app-accent-rgb),0.7)] hover:-translate-y-0.5"
+                >
+                  Começar Grátis
+                </button>
+                <button 
+                  onClick={() => handleScrollToSection('explorar')}
+                  className="w-full sm:w-auto px-6 py-3 rounded-xl font-semibold border border-white/10 hover:border-white/25 text-white bg-white/[0.03] hover:bg-white/[0.07] active:scale-[0.97] transition-all duration-200 text-sm cursor-pointer"
+                >
+                  Explorar Portfólios
+                </button>
               </div>
-              <div className="w-px h-8 bg-white/10 hidden sm:block" />
-              <div className="text-center">
-                <p className="font-display italic text-2xl text-white flex items-center gap-1.5 justify-center"><ShieldCheck className="w-4 h-4 text-[var(--app-accent)]" /> Sem fidelidade</p>
-                <p className="text-[9px] uppercase tracking-wider text-neutral-500 mt-1">Cancele quando quiser</p>
-              </div>
-              <div className="w-px h-8 bg-white/10 hidden sm:block" />
-              <div className="text-center">
-                <p className="font-display italic text-2xl text-white"><CountUp value={5} /> minutos</p>
-                <p className="text-[9px] uppercase tracking-wider text-neutral-500 mt-1">Para colocar o site no ar</p>
-              </div>
-            </div>
-          </Reveal>
+            </Reveal>
+          </div>
         </div>
+      </section>
 
-        {/* Blurred/obfuscated preview of the actual public site — real demo
-            photos, heavily blurred and darkened, standing in for "there's a
-            real site behind this" instead of an abstract grid pattern. The
-            radial dark overlay keeps the CTA copy readable in the center
-            while the blurred imagery still reads at the edges, inviting the
-            click to reveal it properly. */}
-        <Reveal delay={250} className="mt-20 relative max-w-5xl mx-auto">
-          <div className="relative aspect-[16/10] rounded-3xl border border-zinc-900 bg-[#080809] overflow-hidden p-[1.5px] shadow-2xl">
-            <div className="absolute inset-0 bg-gradient-to-b from-[var(--app-accent)]/[0.04] to-transparent pointer-events-none z-10" />
-            <div className="w-full h-full bg-[#050506] rounded-3xl flex flex-col items-center justify-center p-8 text-center relative overflow-hidden">
-              <div className="absolute inset-0 grid grid-cols-4 sm:grid-cols-5">
-                {[...DEMO_PHOTOS, ...DEMO_PHOTOS].slice(0, 10).map((photo, i) => (
-                  <div key={`${photo.id}-${i}`} className="relative aspect-square overflow-hidden">
-                    <img
-                      src={photo.url}
-                      alt=""
-                      aria-hidden="true"
-                      className="w-full h-full object-cover scale-110"
-                      style={{ filter: 'blur(14px) grayscale(0.2) brightness(0.55)' }}
-                    />
-                  </div>
-                ))}
+      {/* Demonstração — the interactive card now lives in its own section
+          instead of sitting loose inside the hero — and no longer sitting
+          right under the fold either. Proper section header (eyebrow +
+          heading) matches the pattern used by every other section on the
+          page (Explorar, Como Funciona, Comparativo...), and the border-t
+          divider + py-24 spacing keeps it from crowding the hero above. */}
+      <section id="demonstracao" className="py-24 border-t border-transparent relative before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-zinc-800/70 before:to-transparent px-6">
+        <Reveal>
+          <div className="text-center max-w-2xl mx-auto mb-14">
+            <p className="inline-flex items-center gap-2 text-xs text-[var(--app-accent)] mb-4 font-semibold uppercase tracking-wider"><span className="w-1 h-1 rounded-full bg-[var(--app-accent)]" />Experimente Agora</p>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl tracking-tight mb-4">
+              <span className="font-sans font-bold text-white">Veja Antes de </span>
+              <span className="font-display italic font-light bg-[linear-gradient(100deg,var(--app-accent-dim)_10%,var(--app-accent)_50%,var(--app-accent-dim)_90%)] bg-clip-text text-transparent">Assinar.</span>
+            </h2>
+            <p className="text-neutral-400 text-sm sm:text-base leading-relaxed font-light">
+              Em poucos minutos seu trabalho está no ar, com o portfólio editorial que ele sempre mereceu.
+            </p>
+          </div>
+        </Reveal>
+
+        <Reveal>
+          <div className="flex flex-wrap items-start justify-center gap-x-10 sm:gap-x-16 gap-y-6 mb-14">
+            <div className="text-center">
+              <p className="font-display italic font-light text-2xl sm:text-3xl text-white flex items-center justify-center gap-2">
+                <Calendar className="w-5 h-5 text-[var(--app-accent)]" /> 14 dias
+              </p>
+              <p className="text-[10px] uppercase tracking-widest text-neutral-500 mt-1.5">Teste grátis, sem cartão</p>
+            </div>
+            <div className="text-center">
+              <p className="font-display italic font-light text-2xl sm:text-3xl text-white flex items-center justify-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-[var(--app-accent)]" /> Sem fidelidade
+              </p>
+              <p className="text-[10px] uppercase tracking-widest text-neutral-500 mt-1.5">Cancele quando quiser</p>
+            </div>
+            <div className="text-center">
+              <p className="font-display italic font-light text-2xl sm:text-3xl text-white flex items-center justify-center gap-2">
+                <Rocket className="w-5 h-5 text-[var(--app-accent)]" /> 5 minutos
+              </p>
+              <p className="text-[10px] uppercase tracking-widest text-neutral-500 mt-1.5">Para colocar o site no ar</p>
+            </div>
+          </div>
+        </Reveal>
+
+        <Reveal delay={150} className="relative max-w-4xl mx-auto">
+          <div className="relative sm:aspect-[16/9] rounded-2xl border border-white/10 bg-[#0a0a0c] overflow-hidden shadow-[0_40px_100px_-20px_rgba(0,0,0,0.7)]">
+            {/* Browser chrome */}
+            <div className="h-9 flex items-center gap-2 px-4 border-b border-white/5 bg-[#0d0d0f] relative z-20">
+              <div className="flex gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-white/10" />
+                <span className="w-2.5 h-2.5 rounded-full bg-white/10" />
+                <span className="w-2.5 h-2.5 rounded-full bg-white/10" />
               </div>
-              <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/70 to-[#050506]" />
-              <div className="absolute inset-0 [mask-image:radial-gradient(ellipse_55%_55%_at_50%_45%,#000_55%,transparent_100%)] bg-[#050506]/95" />
+              <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.04] text-[10px] text-neutral-500">
+                <Lock className="w-2.5 h-2.5" /> seunome.focusportfolio.com
+              </div>
+            </div>
+
+            <div className="absolute inset-0 bg-gradient-to-b from-[var(--app-accent)]/[0.04] to-transparent pointer-events-none z-10" />
+            <div className="w-full h-auto min-h-[460px] sm:h-[calc(100%-2.25rem)] sm:min-h-0 bg-[#050506] flex flex-col items-center justify-center p-6 py-10 sm:py-6 text-center relative overflow-hidden">
+              {/* Thumbnail — brushed-silver tile grid instead of a real photo
+                  mosaic. Each tile is its own metal gradient slice (tone and
+                  angle vary slightly per index) so it reads as a gallery
+                  grid without borrowing from any real portfolio content. */}
+              <div className="absolute inset-0 grid grid-cols-4 sm:grid-cols-5">
+                {Array.from({ length: 10 }).map((_, i) => {
+                  const tone = 210 - (i % 4) * 14;
+                  return (
+                    <div
+                      key={i}
+                      className="relative aspect-square overflow-hidden border border-white/[0.04]"
+                      style={{
+                        background: `linear-gradient(${125 + (i % 3) * 25}deg, rgba(${tone},${tone + 6},${tone + 12},${0.14 + (i % 3) * 0.03}) 0%, rgba(18,18,20,0.5) 55%, transparent 100%)`,
+                      }}
+                    />
+                  );
+                })}
+              </div>
+              {/* Diagonal chrome sweep — a single static glint across the grid,
+                  echoing the Marca Autoral card's metallic identity. */}
+              <div
+                className="absolute inset-0 mix-blend-screen opacity-70"
+                style={{ background: 'linear-gradient(115deg, transparent 32%, rgba(255,255,255,0.10) 48%, rgba(255,255,255,0.02) 53%, transparent 68%)' }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/15 via-black/55 to-[#050506]" />
+              <div className="absolute inset-0 [mask-image:radial-gradient(ellipse_55%_55%_at_50%_45%,#000_55%,transparent_100%)] bg-[#050506]/85" />
               
-              <div className="relative z-10 max-w-2xl">
-                <Aperture className="w-12 h-12 text-[var(--app-accent)] mx-auto mb-6 opacity-70" />
-                <h3 className="text-3xl md:text-4xl mb-4">
+              <div className="relative z-10 max-w-lg">
+                <img src="/focus-mark.png" alt="" className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-5 opacity-90" />
+                <h3 className="text-2xl sm:text-3xl md:text-4xl mb-4">
                   <span className="font-sans font-bold text-white">Veja a Plataforma em </span>
-                  <span className="font-display italic font-light text-[var(--app-accent)]">Ação</span>
+                  <span className="font-display italic font-light bg-[linear-gradient(100deg,var(--app-accent-dim)_10%,var(--app-accent)_50%,var(--app-accent-dim)_90%)] bg-clip-text text-transparent">Ação</span>
                 </h3>
-                <p className="text-neutral-400 text-xs sm:text-sm leading-relaxed mb-8 font-light max-w-lg mx-auto">
+                <p className="text-neutral-400 text-sm leading-relaxed mb-7 font-light max-w-md mx-auto">
                   Não oferecemos mockups estáticos de mentira. Experimente agora mesmo o site público que seus clientes verão, filtre por categoria e mude a identidade visual em tempo real.
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -634,23 +951,32 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
             </div>
           </div>
 
-          {/* Floating glass accent cards — part of the mockup composition */}
-          <div className="hidden md:flex absolute -left-10 top-10 items-center gap-2.5 px-4 py-3 rounded-2xl glass-card shadow-2xl animate-float">
-            <div className="w-8 h-8 rounded-lg bg-[var(--app-accent)]/10 flex items-center justify-center">
-              <Check className="w-4 h-4 text-[var(--app-accent)]" />
+          {/* Glass accent badges — anchored over the card's corners, smaller
+              and more transparent than the main card, with a very subtle
+              up/down float (opposite phase on each badge) instead of sitting
+              perfectly still. */}
+          <div
+            className="hidden md:flex absolute -top-4 left-4 items-center gap-2 px-3 py-2 rounded-xl glass-card shadow-lg z-20 opacity-75"
+            style={{ animation: 'gentleFloat 5s ease-in-out infinite' }}
+          >
+            <div className="w-6 h-6 rounded-lg bg-[var(--app-accent)]/10 flex items-center justify-center">
+              <Check className="w-3 h-3 text-[var(--app-accent)]" />
             </div>
             <div className="text-left">
-              <p className="text-xs font-semibold text-white">Site publicado</p>
-              <p className="text-[9px] text-neutral-500">seunome.focusportfolio.com</p>
+              <p className="text-[11px] font-semibold text-white/80">Site publicado</p>
+              <p className="text-[8px] text-neutral-500">seunome.focusportfolio.com</p>
             </div>
           </div>
-          <div className="hidden md:flex absolute -right-8 bottom-16 items-center gap-2.5 px-4 py-3 rounded-2xl glass-card shadow-2xl animate-float" style={{ animationDelay: '1.2s' }}>
-            <div className="w-8 h-8 rounded-lg bg-[var(--app-accent)]/10 flex items-center justify-center">
-              <Camera className="w-4 h-4 text-[var(--app-accent)]" />
+          <div
+            className="hidden md:flex absolute -bottom-4 right-4 items-center gap-2 px-3 py-2 rounded-xl glass-card shadow-lg z-20 opacity-75"
+            style={{ animation: 'gentleFloatReverse 5s ease-in-out infinite' }}
+          >
+            <div className="w-6 h-6 rounded-lg bg-[var(--app-accent)]/10 flex items-center justify-center">
+              <Camera className="w-3 h-3 text-[var(--app-accent)]" />
             </div>
             <div className="text-left">
-              <p className="text-xs font-semibold text-white">Upload em lote</p>
-              <p className="text-[9px] text-neutral-500">Compressão automática</p>
+              <p className="text-[11px] font-semibold text-white/80">Upload em lote</p>
+              <p className="text-[8px] text-neutral-500">Compressão automática</p>
             </div>
           </div>
         </Reveal>
@@ -661,10 +987,10 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
         <div className="max-w-7xl mx-auto px-6">
           <Reveal>
             <div className="text-center max-w-2xl mx-auto mb-20">
-              <p className="text-xs text-zinc-500 mb-3 font-semibold uppercase tracking-wider">Conecte-se</p>
-              <h2 className="text-4xl md:text-5xl">
+              <p className="inline-flex items-center gap-2 text-xs text-[var(--app-accent)] mb-4 font-semibold uppercase tracking-wider"><span className="w-1 h-1 rounded-full bg-[var(--app-accent)]" />Conecte-se</p>
+              <h2 className="text-4xl md:text-5xl lg:text-6xl tracking-tight">
                 <span className="font-sans font-bold text-white">Fotógrafos na </span>
-                <span className="font-display italic font-light text-[var(--app-accent)]">Plataforma</span>
+                <span className="font-display italic font-light bg-[linear-gradient(100deg,var(--app-accent-dim)_10%,var(--app-accent)_50%,var(--app-accent-dim)_90%)] bg-clip-text text-transparent">Plataforma</span>
               </h2>
               <p className="text-neutral-400 text-sm mt-4 leading-relaxed font-light">
                 Explore os portfólios autorais criados em nossa plataforma por profissionais de renome.
@@ -689,43 +1015,60 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {photographers.map((p) => (
-                <div 
-                  key={p.id}
-                  className="group relative rounded-2xl border border-zinc-900 hover:border-zinc-800 bg-[#080809] p-6 transition-all duration-300 flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-display text-2xl text-white font-medium group-hover:text-zinc-200 transition-colors">
-                        {p.name}
-                      </h3>
-                      <span className="text-[10px] text-zinc-400 px-2 py-0.5 rounded border border-white/5 bg-black font-semibold font-sans">
-                        {p.slug}
-                      </span>
-                    </div>
-                    <p className="text-neutral-400 text-xs leading-relaxed mb-6 line-clamp-3 font-light">
-                      {p.bio || 'Profissional autoral na plataforma de portfólios FocusPortfolio.'}
-                    </p>
-                  </div>
+              {photographers.map((p, idx) => (
+                <Reveal key={p.id} delay={idx * 70} className="h-full">
+                  <div className="group relative h-full rounded-2xl border border-zinc-900 hover:border-[var(--app-accent-dim)]/40 bg-[#0a0a0c] p-5 sm:p-6 transition-colors duration-500 ease-out flex flex-col justify-between overflow-hidden">
+                    <span className="pointer-events-none absolute top-1 right-3 sm:top-2 sm:right-4 font-display italic text-4xl sm:text-6xl text-white/[0.025] group-hover:text-[var(--app-accent)]/10 transition-colors duration-500 select-none">
+                      {String(idx + 1).padStart(2, '0')}
+                    </span>
 
-                  <div className="space-y-4">
-                    {p.specialties && p.specialties.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {p.specialties.slice(0, 3).map((spec, idx) => (
-                          <span key={idx} className="text-[9px] text-zinc-400 border border-zinc-900 px-2 py-0.5 rounded-full bg-black">
+                    <div className="relative">
+                      <div className="flex items-center gap-3 mb-4 sm:mb-5">
+                        <div className="w-11 h-11 shrink-0 rounded-full bg-[image:var(--app-accent-gradient)] p-[1.5px] group-hover:scale-105 transition-transform duration-300">
+                          <div className="w-full h-full rounded-full bg-[#0a0a0c] flex items-center justify-center font-display italic text-sm text-white">
+                            {p.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
+                          </div>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-display text-lg sm:text-xl text-white font-medium group-hover:text-[var(--app-accent)] transition-colors truncate">
+                            {p.name}
+                          </h3>
+                          <span className="text-[10px] text-zinc-500 font-mono truncate block">/{p.slug}</span>
+                        </div>
+                      </div>
+                      <p
+                        className="text-neutral-400 text-xs leading-relaxed mb-6 font-light break-words"
+                        style={{
+                          display: '-webkit-box',
+                          WebkitBoxOrient: 'vertical',
+                          WebkitLineClamp: 3,
+                          overflow: 'hidden',
+                          maxHeight: '3.75rem',
+                        }}
+                      >
+                        {p.bio || 'Profissional autoral na plataforma de portfólios FocusPortfolio.'}
+                      </p>
+                    </div>
+
+                    <div className="relative space-y-4 mt-2">
+                      <div className="flex flex-wrap gap-1.5 min-h-[22px]">
+                        {p.specialties && p.specialties.length > 0 && p.specialties.slice(0, 3).map((spec, sIdx) => (
+                          <span key={sIdx} className="text-[9px] text-zinc-400 border border-zinc-900 px-2 py-0.5 rounded-full bg-black whitespace-nowrap">
                             {spec}
                           </span>
                         ))}
                       </div>
-                    )}
-                    <button 
-                      onClick={() => onNavigateToSlug(p.slug)}
-                      className="w-full py-2.5 rounded-xl text-xs font-semibold text-center text-neutral-300 bg-white/5 border border-white/10 hover:border-white/20 hover:text-white transition-all duration-200 cursor-pointer"
-                    >
-                      Acessar portfólio
-                    </button>
+                      <button 
+                        onClick={() => onNavigateToSlug(p.slug)}
+                        className="w-full py-2.5 rounded-xl text-xs font-semibold text-center text-neutral-300 bg-white/5 border border-white/10 group-hover:border-[var(--app-accent)]/40 group-hover:text-white group-hover:bg-[var(--app-accent)]/[0.08] transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5"
+                      >
+                        Acessar portfólio
+                        <ArrowUpRight className="w-3.5 h-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
+                      </button>
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 h-px bg-[linear-gradient(90deg,transparent_0%,rgba(var(--app-accent-rgb),0.5)_50%,transparent_100%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   </div>
-                </div>
+                </Reveal>
               ))}
             </div>
           )}
@@ -733,37 +1076,36 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
       </section>
 
       {/* Feature Bento Grid (Diferenciais with Silver Brushed Premium Gradients) */}
-      <section className="py-24 max-w-7xl mx-auto px-6 relative">
+      <section className="py-24 max-w-7xl mx-auto px-6 relative overflow-hidden">
         <Reveal>
           <div className="text-center max-w-2xl mx-auto mb-20">
-            <p className="text-xs text-zinc-500 mb-3 font-semibold uppercase tracking-wider">Diferenciais</p>
-            <h2 className="text-4xl md:text-5xl">
+            <p className="inline-flex items-center gap-2 text-xs text-[var(--app-accent)] mb-4 font-semibold uppercase tracking-wider"><span className="w-1 h-1 rounded-full bg-[var(--app-accent)]" />Diferenciais</p>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl tracking-tight">
               <span className="font-sans font-bold text-white">Criado por fotógrafos, para </span>
-              <span className="font-display italic font-light text-[var(--app-accent)]">fotógrafos.</span>
+              <span className="font-display italic font-light bg-[linear-gradient(100deg,var(--app-accent-dim)_10%,var(--app-accent)_50%,var(--app-accent-dim)_90%)] bg-clip-text text-transparent">fotógrafos.</span>
             </h2>
           </div>
         </Reveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Differential 1 */}
-          <Reveal delay={0} className="p-[1.5px] bg-gradient-to-b from-zinc-700 via-zinc-500 to-zinc-900 rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.6)] transition-all duration-300 hover:from-[var(--app-accent)] hover:via-[var(--app-accent-dim)] hover:to-zinc-700 group relative">
-            <div className="relative p-8 h-full rounded-2xl bg-[#080809] flex flex-col aspect-[4/5] overflow-hidden">
-              {/* Light sweep on hover */}
-              <div className="pointer-events-none absolute inset-0 -translate-x-[120%] group-hover:translate-x-[120%] transition-transform duration-[1200ms] ease-out bg-[linear-gradient(115deg,transparent_35%,rgba(231,233,236,0.08)_50%,transparent_65%)]" />
-              <div className="flex items-start justify-between">
-                <div className="w-14 h-14 rounded-2xl bg-[linear-gradient(135deg,#6B6E76_0%,#F4F5F7_45%,#FFFFFF_55%,#9AA0AA_100%)] p-[1.5px] group-hover:scale-105 transition-transform duration-300">
-                  <div className="w-full h-full rounded-2xl bg-[#0B0C0E] flex items-center justify-center">
-                    <LayoutGrid className="w-6 h-6 text-zinc-200" />
-                  </div>
-                </div>
-                <span className="font-display italic text-3xl text-white/10 group-hover:text-[var(--app-accent)]/30 transition-colors duration-500">01</span>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:items-end">
+          {/* Differential 1 — side card, quiet */}
+          <Reveal delay={0} className="p-[1.5px] bg-gradient-to-b from-white/10 via-white/[0.06] to-transparent rounded-2xl shadow-lg transition-all duration-300 hover:from-[var(--app-accent)]/60 hover:via-[var(--app-accent-dim)]/40 hover:to-transparent group relative">
+            <div className="relative p-8 rounded-2xl bg-[#0a0a0c] flex flex-col aspect-[4/5] overflow-hidden">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.01] border border-white/10 group-hover:border-[var(--app-accent)]/40 flex items-center justify-center transition-colors duration-300">
+                <LayoutGrid className="w-6 h-6 text-[var(--app-accent)]" />
               </div>
 
               {/* Mini visual: asymmetric masonry preview exemplifying the "Reel Editorial" grid */}
               <div className="relative flex-1 min-h-[92px] my-6 grid grid-cols-3 grid-rows-2 gap-1.5">
-                <div className="col-span-2 row-span-2 rounded-lg bg-[linear-gradient(150deg,#2a2a2d_0%,#141416_100%)] border border-white/5 group-hover:border-[var(--app-accent)]/25 transition-colors duration-500" />
-                <div className="rounded-lg bg-[linear-gradient(150deg,#1f1f22_0%,#0e0e10_100%)] border border-white/5" />
-                <div className="rounded-lg bg-[linear-gradient(150deg,rgba(var(--app-accent-rgb),0.18)_0%,#0e0e10_100%)] border border-white/5 group-hover:border-[var(--app-accent)]/30 transition-colors duration-500" />
+                <div className="col-span-2 row-span-2 rounded-lg bg-[linear-gradient(150deg,#2a2a2d_0%,#141416_100%)] border border-white/5 group-hover:border-[var(--app-accent)]/25 transition-colors duration-500 flex items-center justify-center">
+                  <Camera className="w-5 h-5 text-white/[0.12]" />
+                </div>
+                <div className="rounded-lg bg-[linear-gradient(150deg,#1f1f22_0%,#0e0e10_100%)] border border-white/5 group-hover:border-[var(--app-accent)]/25 transition-colors duration-500 flex items-center justify-center">
+                  <Camera className="w-3.5 h-3.5 text-white/[0.12]" />
+                </div>
+                <div className="rounded-lg bg-[linear-gradient(150deg,rgba(var(--app-accent-rgb),0.18)_0%,#0e0e10_100%)] border border-white/5 group-hover:border-[var(--app-accent)]/30 transition-colors duration-500 flex items-center justify-center">
+                  <Camera className="w-3.5 h-3.5 text-[var(--app-accent)]/40" />
+                </div>
               </div>
 
               <div className="relative">
@@ -776,61 +1118,39 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
             </div>
           </Reveal>
           
-          {/* Differential 2 */}
-          <Reveal delay={120} className="p-[1.5px] bg-gradient-to-b from-zinc-700 via-zinc-500 to-zinc-900 rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.6)] transition-all duration-300 hover:from-[var(--app-accent)] hover:via-[var(--app-accent-dim)] hover:to-zinc-700 group relative">
-            <div className="relative p-8 h-full rounded-2xl bg-[#080809] flex flex-col aspect-[4/5] overflow-hidden">
-              <div className="pointer-events-none absolute inset-0 -translate-x-[120%] group-hover:translate-x-[120%] transition-transform duration-[1200ms] ease-out bg-[linear-gradient(115deg,transparent_35%,rgba(231,233,236,0.08)_50%,transparent_65%)]" />
-              <div className="flex items-start justify-between">
-                <div className="w-14 h-14 rounded-2xl bg-[linear-gradient(135deg,#6B6E76_0%,#F4F5F7_45%,#FFFFFF_55%,#9AA0AA_100%)] p-[1.5px] group-hover:scale-105 transition-transform duration-300">
-                  <div className="w-full h-full rounded-2xl bg-[#0B0C0E] flex items-center justify-center">
-                    <Settings className="w-6 h-6 text-zinc-200 group-hover:rotate-45 transition-transform duration-500" />
-                  </div>
-                </div>
-                <span className="font-display italic text-3xl text-white/10 group-hover:text-[var(--app-accent)]/30 transition-colors duration-500">02</span>
-              </div>
-
-              {/* Mini visual: color/type customization preview exemplifying "Marca Autoral" */}
-              <div className="relative flex-1 min-h-[92px] my-6 rounded-lg border border-white/5 bg-[#0d0d0f] p-4 flex flex-col justify-between">
-                <span className="font-display italic text-lg text-white/80">Aa</span>
-                <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full border border-white/10" style={{ background: 'var(--app-accent, #9AA0AA)' }} />
-                  <span className="w-5 h-5 rounded-full bg-zinc-700 border border-white/10" />
-                  <span className="w-5 h-5 rounded-full bg-zinc-500 border border-white/10" />
-                  <span className="text-[9px] text-neutral-500 ml-auto group-hover:text-[var(--app-accent)]/70 transition-colors duration-500">#HEX</span>
-                </div>
-              </div>
-
-              <div className="relative">
-                <h3 className="font-display italic text-2xl text-white mb-2">Marca Autoral</h3>
-                <p className="text-neutral-400 text-xs sm:text-sm leading-relaxed font-light">
-                  Customize seu logo, favicon, retrato pessoal de perfil e escolha sua cor de destaque (Hex) para garantir uma identidade visual totalmente coesa e refinada.
-                </p>
-              </div>
-              <div className="absolute bottom-0 left-0 right-0 h-px bg-[linear-gradient(90deg,transparent_0%,rgba(var(--app-accent-rgb),0.5)_50%,transparent_100%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            </div>
+          {/* Differential 2 — solid-fill centerpiece: taller than the side cards but bottom-aligned with them (items-end). Border-color + box-shadow transition (not a gradient swap) so the hover state actually animates smoothly instead of popping; kept low-opacity so it doesn't wash out the text on top of the orange fill.
+              Shimmer no longer loops forever — it only plays while the card
+              is scrolled into view (entrance/exit tied to Reveal's own
+              visibility) or while the user is actively hovering it. */}
+          <Reveal delay={120} className="z-10">
+            {(visible) => <MarcaAutoralCard visible={visible} />}
           </Reveal>
 
-          {/* Differential 3 */}
-          <Reveal delay={240} className="p-[1.5px] bg-gradient-to-b from-zinc-700 via-zinc-500 to-zinc-900 rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.6)] transition-all duration-300 hover:from-[var(--app-accent)] hover:via-[var(--app-accent-dim)] hover:to-zinc-700 group relative">
-            <div className="relative p-8 h-full rounded-2xl bg-[#080809] flex flex-col aspect-[4/5] overflow-hidden">
-              <div className="pointer-events-none absolute inset-0 -translate-x-[120%] group-hover:translate-x-[120%] transition-transform duration-[1200ms] ease-out bg-[linear-gradient(115deg,transparent_35%,rgba(231,233,236,0.08)_50%,transparent_65%)]" />
-              <div className="flex items-start justify-between">
-                <div className="w-14 h-14 rounded-2xl bg-[linear-gradient(135deg,#6B6E76_0%,#F4F5F7_45%,#FFFFFF_55%,#9AA0AA_100%)] p-[1.5px] group-hover:scale-105 transition-transform duration-300">
-                  <div className="w-full h-full rounded-2xl bg-[#0B0C0E] flex items-center justify-center">
-                    <Award className="w-6 h-6 text-zinc-200" />
-                  </div>
-                </div>
-                <span className="font-display italic text-3xl text-white/10 group-hover:text-[var(--app-accent)]/30 transition-colors duration-500">03</span>
+          {/* Differential 3 — side card, quiet */}
+          <Reveal delay={240} className="p-[1.5px] bg-gradient-to-b from-white/10 via-white/[0.06] to-transparent rounded-2xl shadow-lg transition-all duration-300 hover:from-[var(--app-accent)]/60 hover:via-[var(--app-accent-dim)]/40 hover:to-transparent group relative">
+            <div className="relative p-8 rounded-2xl bg-[#0a0a0c] flex flex-col aspect-[4/5] overflow-hidden">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.01] border border-white/10 group-hover:border-[var(--app-accent)]/40 flex items-center justify-center transition-colors duration-300">
+                <Award className="w-6 h-6 text-[var(--app-accent)]" />
               </div>
 
-              {/* Mini visual: testimonial snippet exemplifying "Prova Social" */}
-              <div className="relative flex-1 min-h-[92px] my-6 rounded-lg border border-white/5 bg-[#0d0d0f] p-4 flex flex-col justify-between">
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} className="w-3 h-3 fill-[var(--app-accent)] text-[var(--app-accent)]" />
-                  ))}
+              {/* Mini visual: testimonial card mock exemplifying "Prova Social" */}
+              <div className="relative flex-1 min-h-[92px] my-6 rounded-lg border border-white/5 group-hover:border-[var(--app-accent)]/25 transition-colors duration-500 bg-[#0d0d0f] p-4 flex flex-col justify-between">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-7 h-7 rounded-full bg-[image:var(--app-accent-gradient)] bg-[length:200%_100%] bg-[position:30%_0%] shrink-0" />
+                  <div className="flex-1 space-y-1.5 min-w-0">
+                    <div className="h-1.5 w-14 rounded-full bg-white/20" />
+                    <div className="h-1 w-9 rounded-full bg-white/8" />
+                  </div>
+                  <div className="flex items-center gap-0.5 shrink-0">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} className="w-2.5 h-2.5 fill-[var(--app-accent)] text-[var(--app-accent)]" />
+                    ))}
+                  </div>
                 </div>
-                <div className="h-1.5 w-4/5 rounded-full bg-white/10" />
+                <div className="space-y-1.5">
+                  <div className="h-1.5 w-full rounded-full bg-white/10" />
+                  <div className="h-1.5 w-3/5 rounded-full bg-white/10" />
+                </div>
               </div>
 
               <div className="relative">
@@ -850,30 +1170,37 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
         <div className="max-w-6xl mx-auto px-6">
           <Reveal>
             <div className="text-center max-w-2xl mx-auto mb-20">
-              <p className="text-xs text-zinc-500 mb-3 font-semibold uppercase tracking-wider">Do Zero ao Publicado</p>
-              <h2 className="text-4xl md:text-5xl">
+              <p className="inline-flex items-center gap-2 text-xs text-[var(--app-accent)] mb-4 font-semibold uppercase tracking-wider"><span className="w-1 h-1 rounded-full bg-[var(--app-accent)]" />Do Zero ao Publicado</p>
+              <h2 className="text-4xl md:text-5xl lg:text-6xl tracking-tight">
                 <span className="font-sans font-bold text-white">Como </span>
-                <span className="font-display italic font-light text-[var(--app-accent)]">Funciona</span>
+                <span className="font-display italic font-light bg-[linear-gradient(100deg,var(--app-accent-dim)_10%,var(--app-accent)_50%,var(--app-accent-dim)_90%)] bg-clip-text text-transparent">Funciona</span>
               </h2>
             </div>
           </Reveal>
 
-          <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-6">
-            {/* Connecting line (desktop only) */}
-            <div className="hidden lg:block absolute top-7 left-[10%] right-[10%] h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-
+          <div className="relative">
             {HOW_IT_WORKS_STEPS.map((step, idx) => {
               const StepIcon = step.icon;
+              const reverse = idx % 2 === 1;
               return (
-                <Reveal key={step.title} delay={idx * 120} className="relative flex flex-col items-center text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-[linear-gradient(135deg,#6B6E76_0%,#F4F5F7_45%,#FFFFFF_55%,#9AA0AA_100%)] p-[1.5px] mb-5 shadow-[0_4px_18px_rgba(0,0,0,0.5)] relative z-10">
-                    <div className="w-full h-full rounded-2xl bg-[#050506] flex items-center justify-center">
-                      <StepIcon className="w-5 h-5 text-zinc-200" />
+                <Reveal key={step.title} delay={idx * 90}>
+                  <div className={`flex flex-col md:flex-row ${reverse ? 'md:flex-row-reverse' : ''} items-center gap-4 md:gap-12 py-8 border-b border-white/5 last:border-0`}>
+                    <div className="shrink-0 w-20 sm:w-28 md:w-44 flex items-center justify-center">
+                      <span className="font-display italic text-[4.5rem] sm:text-[6rem] md:text-[8.5rem] leading-none select-none bg-[image:var(--app-accent-gradient)] bg-clip-text text-transparent opacity-40">
+                        {String(idx + 1).padStart(2, '0')}
+                      </span>
+                    </div>
+                    <div className={`flex-1 flex items-center gap-4 text-center md:text-left ${reverse ? 'md:flex-row-reverse md:text-right' : ''}`}>
+                      <div className="w-12 h-12 shrink-0 rounded-xl bg-gradient-to-br from-[var(--app-accent)]/[0.12] to-transparent border border-[var(--app-accent)]/20 hidden sm:flex items-center justify-center">
+                        <StepIcon className="w-5 h-5 text-[var(--app-accent)]" />
+                      </div>
+                      <div>
+                        <span className="text-[9px] uppercase tracking-widest text-neutral-600">Passo {idx + 1}</span>
+                        <h3 className="font-display italic text-2xl md:text-3xl text-white mt-1 mb-1.5">{step.title}</h3>
+                        <p className="text-neutral-500 text-xs leading-relaxed font-light max-w-sm mx-auto md:mx-0">{step.desc}</p>
+                      </div>
                     </div>
                   </div>
-                  <span className="text-[9px] uppercase tracking-widest text-neutral-600 mb-1.5">Passo {idx + 1}</span>
-                  <h3 className="font-display italic text-lg text-white mb-2">{step.title}</h3>
-                  <p className="text-neutral-500 text-xs leading-relaxed font-light max-w-[190px]">{step.desc}</p>
                 </Reveal>
               );
             })}
@@ -886,10 +1213,10 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
         <div className="max-w-4xl mx-auto px-6">
           <Reveal>
             <div className="text-center max-w-2xl mx-auto mb-16">
-              <p className="text-xs text-zinc-500 mb-3 font-semibold uppercase tracking-wider">Comparativo</p>
-              <h2 className="text-4xl md:text-5xl">
+              <p className="inline-flex items-center gap-2 text-xs text-[var(--app-accent)] mb-4 font-semibold uppercase tracking-wider"><span className="w-1 h-1 rounded-full bg-[var(--app-accent)]" />Comparativo</p>
+              <h2 className="text-4xl md:text-5xl lg:text-6xl tracking-tight">
                 <span className="font-sans font-bold text-white">Feito para portfólio. </span>
-                <span className="font-display italic font-light text-[var(--app-accent)]">Não para feed.</span>
+                <span className="font-display italic font-light bg-[linear-gradient(100deg,var(--app-accent-dim)_10%,var(--app-accent)_50%,var(--app-accent-dim)_90%)] bg-clip-text text-transparent">Não para feed.</span>
               </h2>
               <p className="text-neutral-400 text-sm mt-4 leading-relaxed font-light">
                 Instagram, Behance e Google Drive são ótimos para outras coisas. Para vender seu trabalho autoral com credibilidade, você precisa de mais.
@@ -898,39 +1225,53 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
           </Reveal>
 
           <Reveal delay={100}>
-            <div className="p-[1.5px] rounded-3xl bg-gradient-to-b from-zinc-700 via-zinc-600 to-zinc-900 shadow-2xl">
-              <div className="chrome-hairline-top rounded-3xl border border-zinc-900 bg-[#080809] overflow-hidden">
-                <div className="grid grid-cols-[1.5fr_1fr_1fr] sm:grid-cols-[2fr_1fr_1fr] border-b border-zinc-900 text-center">
-                  <div className="p-5" />
-                  <div className="p-3 sm:p-5 border-l border-zinc-900 flex items-center justify-center">
-                    <span className="text-[9px] sm:text-[10px] uppercase tracking-widest text-neutral-500 leading-tight">Instagram / Drive</span>
-                  </div>
-                  <div className="p-3 sm:p-5 border-l border-[var(--app-accent)]/20 bg-[linear-gradient(180deg,rgba(var(--app-accent-rgb),0.08)_0%,rgba(var(--app-accent-rgb),0.02)_100%)] relative overflow-hidden flex items-center justify-center gap-1.5">
-                    <div className="absolute top-0 left-0 right-0 h-px bg-[linear-gradient(90deg,transparent,rgba(var(--app-accent-rgb),0.7),transparent)]" />
-                    <div className="w-5 h-5 rounded-md bg-black border border-white/25 flex items-center justify-center shrink-0">
-                      <Aperture className="w-3 h-3 text-zinc-200" />
-                    </div>
-                    <span className="font-display italic text-xs sm:text-sm bg-[linear-gradient(100deg,var(--app-accent-dim)_10%,var(--app-accent)_50%,var(--app-accent-dim)_90%)] bg-clip-text text-transparent font-semibold whitespace-nowrap">FocusPortfolio</span>
+            <div className="relative rounded-[1.75rem] border border-white/10 bg-[#0a0a0c] overflow-hidden shadow-[0_40px_90px_-30px_rgba(0,0,0,0.7)]">
+              <div className="grid grid-cols-[1fr_64px_96px] sm:grid-cols-[1fr_140px_180px]">
+                {/* Continuous accent wash behind the whole Focus column. Every cell below is explicitly
+                    placed with gridColumn/gridRow — relying on CSS Grid auto-placement here caused this
+                    spanning item to "reserve" column 3 in every row, which pushed the un-placed sibling
+                    cells into the wrong slots (that was the bug in the previous version). */}
+                <div
+                  style={{ gridColumn: 3, gridRow: `1 / ${COMPARISON_ROWS.length + 2}` }}
+                  className="bg-[image:var(--app-accent-gradient)] bg-[length:200%_100%] bg-[position:30%_0%]"
+                />
+
+                {/* Header row */}
+                <div style={{ gridColumn: 1, gridRow: 1 }} className="p-5 sm:p-7 flex items-end">
+                  <p className="inline-flex items-center gap-2 text-[10px] sm:text-xs uppercase tracking-widest text-neutral-500 font-semibold"><span className="w-1 h-1 rounded-full bg-neutral-600" />O que você leva</p>
+                </div>
+                <div style={{ gridColumn: 2, gridRow: 1 }} className="px-1.5 py-5 sm:p-7 border-l border-white/5 flex flex-col items-center justify-end text-center gap-1.5">
+                  <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/5 flex items-center justify-center shrink-0">
+                    <X className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-neutral-600" />
+                  </span>
+                  <div className="h-3.5 sm:h-7 flex items-center justify-center">
+                    <p className="sm:hidden text-[7px] uppercase tracking-wider text-neutral-500 font-semibold leading-tight">Outros</p>
+                    <p className="hidden sm:block text-[10px] uppercase tracking-widest text-neutral-500 font-semibold leading-tight">Instagram /<br />Drive...</p>
                   </div>
                 </div>
-                {COMPARISON_ROWS.map((row, idx) => (
-                  <div key={row.label} className={`grid grid-cols-[1.5fr_1fr_1fr] sm:grid-cols-[2fr_1fr_1fr] text-center items-center group transition-colors duration-200 hover:bg-white/[0.015] ${idx !== COMPARISON_ROWS.length - 1 ? 'border-b border-zinc-900/70' : ''}`}>
-                    <div className="p-4 sm:p-5 text-left">
-                      <span className="text-xs text-neutral-300 font-light">{row.label}</span>
-                    </div>
-                    <div className="p-4 sm:p-5 border-l border-zinc-900 flex justify-center">
-                      {row.others ? <Check className="w-4 h-4 text-neutral-500" /> : <Minus className="w-4 h-4 text-neutral-700" />}
-                    </div>
-                    <div className="p-4 sm:p-5 border-l border-[var(--app-accent)]/20 bg-[var(--app-accent)]/[0.02] flex justify-center">
-                      {row.focus ? (
-                        <span className="w-6 h-6 rounded-full bg-[linear-gradient(135deg,#6B6E76_0%,#F4F5F7_45%,#FFFFFF_55%,#9AA0AA_100%)] p-[1.5px] flex items-center justify-center shadow-[0_0_10px_rgba(231,233,236,0.25)]">
-                          <span className="w-full h-full rounded-full bg-[#0B0C0E] flex items-center justify-center">
-                            <Check className="w-3 h-3 text-zinc-100" />
-                          </span>
-                        </span>
-                      ) : <Minus className="w-4 h-4 text-neutral-700" />}
-                    </div>
+                <div style={{ gridColumn: 3, gridRow: 1 }} className="relative px-1.5 py-5 sm:p-7 border-l border-white/10 flex flex-col items-center justify-end text-center gap-1.5">
+                  <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                    <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[var(--app-accent-ink)]" />
+                  </span>
+                  <div className="h-3.5 sm:h-7 flex items-center justify-center">
+                    <img src={FOCUS_LOGO_INK} alt="Focus" className="h-3 sm:h-4 w-auto object-contain opacity-90" />
                   </div>
+                </div>
+
+
+                {/* Feature rows */}
+                {COMPARISON_ROWS.map((row, i) => (
+                  <React.Fragment key={row.label}>
+                    <div style={{ gridColumn: 1, gridRow: i + 2 }} className="px-3 py-4 sm:p-6 border-t border-white/5 flex items-center">
+                      <p className="text-xs sm:text-sm text-neutral-300 font-light leading-snug">{row.label}</p>
+                    </div>
+                    <div style={{ gridColumn: 2, gridRow: i + 2 }} className="px-1.5 py-4 sm:p-6 border-t border-l border-white/5 flex items-center justify-center">
+                      <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-neutral-700 shrink-0" />
+                    </div>
+                    <div style={{ gridColumn: 3, gridRow: i + 2 }} className="relative px-1.5 py-4 sm:p-6 border-t border-l border-white/10 flex items-center justify-center">
+                      <Check className="w-4 h-4 sm:w-[18px] sm:h-[18px] text-[var(--app-accent-ink)] shrink-0" strokeWidth={2.5} />
+                    </div>
+                  </React.Fragment>
                 ))}
               </div>
             </div>
@@ -943,10 +1284,10 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
         <div className="max-w-6xl mx-auto px-6">
           <Reveal>
             <div className="text-center max-w-2xl mx-auto mb-16">
-              <p className="text-xs text-zinc-500 mb-3 font-semibold uppercase tracking-wider">Valor</p>
-              <h2 className="text-4xl md:text-5xl">
+              <p className="inline-flex items-center gap-2 text-xs text-[var(--app-accent)] mb-4 font-semibold uppercase tracking-wider"><span className="w-1 h-1 rounded-full bg-[var(--app-accent)]" />Valor</p>
+              <h2 className="text-4xl md:text-5xl lg:text-6xl tracking-tight">
                 <span className="font-sans font-bold text-white">Escolha Seu </span>
-                <span className="font-display italic font-light text-[var(--app-accent)]">Caminho</span>
+                <span className="font-display italic font-light bg-[linear-gradient(100deg,var(--app-accent-dim)_10%,var(--app-accent)_50%,var(--app-accent-dim)_90%)] bg-clip-text text-transparent">Caminho</span>
               </h2>
               <p className="text-neutral-400 text-sm mt-4 leading-relaxed font-light">
                 Comece agora sem compromisso com nosso teste gratuito ou ative o plano completo para expandir sua marca.
@@ -995,8 +1336,8 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
             </div>
 
             {/* Card 2: Plano Pro (Anual) */}
-            <div className="rounded-3xl border border-[var(--app-accent)]/30 bg-[#080809] p-8 flex flex-col justify-between relative shadow-2xl scale-105 z-10 shadow-black/80 ring-1 ring-[var(--app-accent)]/10">
-              <div className="absolute top-0 right-8 -translate-y-1/2 px-3 py-1 rounded-full bg-[var(--app-accent)] text-[var(--app-accent-ink)] text-[9px] uppercase tracking-widest font-semibold shadow-md">
+            <div className="rounded-3xl border border-[var(--app-accent)]/30 bg-[#080809] p-8 flex flex-col justify-between relative shadow-2xl scale-105 z-10 before:absolute before:-inset-6 before:-z-10 before:rounded-[2rem] before:bg-[radial-gradient(ellipse_at_center,rgba(var(--app-accent-rgb),0.12)_0%,transparent_70%)] before:blur-2xl">
+              <div className="absolute top-0 right-8 -translate-y-1/2 px-3 py-1 rounded-full bg-[image:var(--app-accent-gradient)] text-[var(--app-accent-ink)] text-[9px] uppercase tracking-widest font-semibold shadow-md border border-white/10">
                 MAIS VENDIDO
               </div>
               
@@ -1094,14 +1435,17 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
 
       {/* FAQ */}
       <section id="faq" className="py-24 border-t border-transparent relative before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-zinc-800/70 before:to-transparent">
-        <div className="max-w-3xl mx-auto px-6">
+        <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-[1fr_1.4fr] gap-12 md:gap-16">
           <Reveal>
-            <div className="text-center max-w-2xl mx-auto mb-16">
-              <p className="text-xs text-zinc-500 mb-3 font-semibold uppercase tracking-wider">Dúvidas</p>
-              <h2 className="text-4xl md:text-5xl">
+            <div className="md:sticky md:top-28 text-center md:text-left">
+              <p className="inline-flex items-center gap-2 text-xs text-[var(--app-accent)] mb-4 font-semibold uppercase tracking-wider"><span className="w-1 h-1 rounded-full bg-[var(--app-accent)]" />Dúvidas</p>
+              <h2 className="text-4xl md:text-5xl tracking-tight mb-4">
                 <span className="font-sans font-bold text-white">Perguntas </span>
-                <span className="font-display italic font-light text-[var(--app-accent)]">Frequentes</span>
+                <span className="font-display italic font-light bg-[linear-gradient(100deg,var(--app-accent-dim)_10%,var(--app-accent)_50%,var(--app-accent-dim)_90%)] bg-clip-text text-transparent">Frequentes</span>
               </h2>
+              <p className="text-neutral-500 text-sm font-light max-w-xs mx-auto md:mx-0">
+                Tudo o que você precisa saber antes de publicar seu portfólio.
+              </p>
             </div>
           </Reveal>
 
@@ -1135,20 +1479,27 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
       </section>
 
       {/* Final CTA — the closing note of the narrative, stronger than the hero's */}
-      <section className="py-28 border-t border-transparent relative before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-zinc-800/70 before:to-transparent overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-[var(--app-accent)]/[0.03] blur-[140px] pointer-events-none" />
+      <section className="py-32 border-t border-transparent relative before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-zinc-800/70 before:to-transparent overflow-hidden">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.25] [mask-image:radial-gradient(ellipse_55%_60%_at_50%_50%,black_0%,transparent_75%)]"
+          style={{
+            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.35) 1px, transparent 1px)',
+            backgroundSize: '28px 28px',
+          }}
+        />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-[var(--app-accent)]/[0.06] blur-[140px] pointer-events-none" />
         <Reveal className="relative max-w-2xl mx-auto px-6 text-center">
-          <Aperture className="w-10 h-10 text-[var(--app-accent)] mx-auto mb-6 opacity-70" />
-          <h2 className="text-4xl sm:text-6xl tracking-tight leading-tight mb-6">
-            <span className="font-sans font-bold text-white">Seu portfólio merece sair do </span>
-            <span className="font-display italic font-light text-[var(--app-accent)]">rascunho hoje.</span>
+          <img src="/focus-mark.png" alt="" className="w-10 h-10 mx-auto mb-6 opacity-90" />
+          <h2 className="text-5xl sm:text-7xl tracking-tighter leading-[0.98] mb-6 font-extrabold">
+            <span className="font-sans text-white">Seu portfólio merece sair do </span>
+            <span className="font-display italic font-light bg-[linear-gradient(100deg,var(--app-accent-dim)_10%,var(--app-accent)_50%,var(--app-accent-dim)_90%)] bg-clip-text text-transparent">rascunho hoje.</span>
           </h2>
           <p className="text-neutral-400 text-sm sm:text-base leading-relaxed mb-10 font-light max-w-lg mx-auto">
             Comece grátis por 14 dias, sem cartão de crédito. Em poucos minutos seu trabalho está no ar, com o portfólio editorial que ele sempre mereceu.
           </p>
           <button 
             onClick={() => { window.location.href = '/cadastro'; }}
-            className="app-btn-accent px-10 py-4.5 rounded-xl font-semibold active:scale-95 transition-all duration-200 cursor-pointer text-xs hover:brightness-105 inline-flex items-center gap-2"
+            className="app-btn-accent px-10 py-4.5 rounded-xl font-semibold active:scale-95 transition-all duration-200 cursor-pointer text-sm hover:brightness-105 inline-flex items-center gap-2 shadow-[0_8px_30px_-8px_rgba(var(--app-accent-rgb),0.55)] hover:-translate-y-0.5"
           >
             Criar Meu Portfólio Agora <ArrowRight className="w-4 h-4" />
           </button>
@@ -1156,19 +1507,27 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-transparent relative before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-zinc-800/70 before:to-transparent bg-black text-neutral-500 text-xs font-sans relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-px bg-[linear-gradient(90deg,transparent_0%,rgba(231,233,236,0.25)_50%,transparent_100%)]" />
-        <div className="max-w-7xl mx-auto px-6 pt-16 pb-10">
+      <footer className="border-t border-transparent relative before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-zinc-800/70 before:to-transparent bg-black text-neutral-500 text-xs font-sans overflow-hidden">
+        <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[420px] rounded-full bg-[radial-gradient(ellipse,rgba(var(--app-accent-rgb),0.07)_0%,transparent_70%)] blur-[80px]" />
+
+        {/* Back to top — compact, no oversized wordmark */}
+        <div className="relative max-w-7xl mx-auto px-6 pt-16">
+          <Reveal>
+            <button
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="group inline-flex items-center gap-2 text-neutral-600 hover:text-[var(--app-accent)] transition-colors duration-200 cursor-pointer mb-12"
+              aria-label="Voltar ao topo"
+            >
+              <ArrowUpRight className="w-3.5 h-3.5 rotate-[-45deg] group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform duration-200" />
+              <span className="text-[10px] uppercase tracking-widest">Voltar ao topo</span>
+            </button>
+          </Reveal>
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-6 pb-10">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-zinc-900">
             <div className="md:col-span-2">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 rounded-xl bg-[linear-gradient(135deg,#6B6E76_0%,#F4F5F7_45%,#FFFFFF_55%,#9AA0AA_100%)] p-[1.5px] flex items-center justify-center">
-                  <div className="w-full h-full rounded-xl bg-black flex items-center justify-center">
-                    <Aperture className="w-4 h-4 text-zinc-200" />
-                  </div>
-                </div>
-                <span className="font-display italic text-xl font-light tracking-tight text-white">FocusPortfolio</span>
-              </div>
+              <img src="/focus-logo-metallic.png" alt="FocusPortfolio" className="h-6 w-auto mb-4" />
               <p className="text-neutral-500 text-xs leading-relaxed max-w-xs font-light">
                 O portfólio editorial para o trabalho de fotógrafos autorais. Design minimalista, curadoria visual e controle absoluto sobre o seu acervo.
               </p>
@@ -1177,19 +1536,19 @@ export default function SaasLandingPage({ onNavigateToAdmin, onNavigateToSlug }:
             <div>
               <p className="text-[10px] uppercase tracking-widest text-neutral-600 font-semibold mb-4">Produto</p>
               <ul className="space-y-3">
-                <li><button onClick={() => handleScrollToSection('explorar')} className="hover:text-white transition-colors duration-200">Fotógrafos</button></li>
-                <li><button onClick={() => handleScrollToSection('planos')} className="hover:text-white transition-colors duration-200">Planos</button></li>
-                <li><button onClick={() => handleScrollToSection('faq')} className="hover:text-white transition-colors duration-200">Perguntas Frequentes</button></li>
-                <li><button onClick={() => setDemoOpen(true)} className="hover:text-white transition-colors duration-200">Demonstração ao vivo</button></li>
+                <li><button onClick={() => handleScrollToSection('explorar')} className="hover:text-[var(--app-accent)] transition-colors duration-200">Fotógrafos</button></li>
+                <li><button onClick={() => handleScrollToSection('planos')} className="hover:text-[var(--app-accent)] transition-colors duration-200">Planos</button></li>
+                <li><button onClick={() => handleScrollToSection('faq')} className="hover:text-[var(--app-accent)] transition-colors duration-200">Perguntas Frequentes</button></li>
+                <li><button onClick={() => setDemoOpen(true)} className="hover:text-[var(--app-accent)] transition-colors duration-200">Demonstração ao vivo</button></li>
               </ul>
             </div>
 
             <div>
               <p className="text-[10px] uppercase tracking-widest text-neutral-600 font-semibold mb-4">Conta</p>
               <ul className="space-y-3">
-                <li><button onClick={() => { window.location.href = '/admin/login'; }} className="hover:text-white transition-colors duration-200">Painel do Fotógrafo</button></li>
-                <li><button onClick={() => { window.location.href = '/cadastro'; }} className="hover:text-white transition-colors duration-200">Criar Conta Grátis</button></li>
-                <li><button onClick={() => { window.location.href = '/admin/login?mode=forgot'; }} className="hover:text-white transition-colors duration-200">Esqueci Minha Senha</button></li>
+                <li><button onClick={() => { window.location.href = '/admin/login'; }} className="hover:text-[var(--app-accent)] transition-colors duration-200">Painel do Fotógrafo</button></li>
+                <li><button onClick={() => { window.location.href = '/cadastro'; }} className="hover:text-[var(--app-accent)] transition-colors duration-200">Criar Conta Grátis</button></li>
+                <li><button onClick={() => { window.location.href = '/admin/login?mode=forgot'; }} className="hover:text-[var(--app-accent)] transition-colors duration-200">Esqueci Minha Senha</button></li>
               </ul>
             </div>
           </div>
