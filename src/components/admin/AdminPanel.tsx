@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type CSSProperties } from 'react';
 import { supabase } from '../../lib/supabase';
 import AdminSidebar, { AdminTab } from './AdminSidebar';
 import DashboardTab from './tabs/DashboardTab';
@@ -23,6 +23,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
   const [userName, setUserName] = useState('Fotógrafo');
   const [userId, setUserId] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string>('');
 
   // Toast notifications
   const [toastMessage, setToastMessage] = useState('');
@@ -39,7 +40,18 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           setUserId(user.id);
-          
+
+          // Fetch the photographer's uploaded avatar photo for the sidebar
+          // user frame — previously the sidebar only ever showed initials.
+          const { data: settingsData } = await supabase
+            .from('site_settings')
+            .select('avatar_url')
+            .eq('photographer_id', user.id)
+            .maybeSingle();
+          if (settingsData?.avatar_url) {
+            setAvatarUrl(settingsData.avatar_url);
+          }
+
           // Fetch corresponding photographer record
           const { data, error } = await supabase
             .from('photographers')
@@ -157,11 +169,25 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen md:h-screen md:overflow-hidden bg-[#050506] text-neutral-200 selection:bg-white/10 selection:text-zinc-200">
+    <div
+      className="flex flex-col md:flex-row min-h-screen md:h-screen md:overflow-hidden bg-[#08080a] text-neutral-200 selection:bg-white/10 selection:text-zinc-200"
+      style={{
+        // Same exact silver tokens as SaaSLandingPage's root override. Set
+        // once here so it cascades (CSS custom properties inherit down the
+        // tree) into AdminSidebar and every tab — no need to repeat this
+        // block in each one.
+        '--app-accent': '#DCE3EA',
+        '--app-accent-dim': '#9AA3AF',
+        '--app-accent-rgb': '220,227,234',
+        '--app-accent-ink': '#0B0D10',
+        '--app-accent-gradient': 'linear-gradient(120deg, #2A2E34 0%, #7B8492 18%, #C3C9D1 34%, #FFFFFF 46%, #EBEFF2 54%, #FFFFFF 66%, #9AA3AF 80%, #4B515A 100%)',
+      } as CSSProperties}
+    >
       <AdminSidebar 
         activeTab={activeTab} 
         onTabChange={setActiveTab} 
         userName={userName} 
+        avatarUrl={avatarUrl}
         onLogout={handleLogout} 
       />
 
@@ -182,7 +208,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
             }}
           />
         </div>
-        <div className="max-w-6xl mx-auto space-y-8 pb-12 relative z-10">
+        <div className="max-w-6xl mx-auto space-y-8 pb-12 relative z-10 min-h-[70vh]">
           {renderTabContent()}
         </div>
       </main>

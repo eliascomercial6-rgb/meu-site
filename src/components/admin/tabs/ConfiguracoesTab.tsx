@@ -140,7 +140,17 @@ export default function ConfiguracoesTab({ userId, onShowToast }: ConfiguracoesT
   }
 
   return (
-    <div className="max-w-2xl animate-fade-in space-y-8">
+    <div className="max-w-2xl animate-fade-in space-y-8" style={{
+        // Same silver tokens as SaaSLandingPage/Login — without this the
+        // admin panel's buttons/borders/gradients fall back to whatever
+        // index.css defines globally, which reads as a duller/different
+        // silver than the rest of the product.
+        '--app-accent': '#DCE3EA',
+        '--app-accent-dim': '#9AA3AF',
+        '--app-accent-rgb': '220,227,234',
+        '--app-accent-ink': '#0B0D10',
+        '--app-accent-gradient': 'linear-gradient(120deg, #2A2E34 0%, #7B8492 18%, #C3C9D1 34%, #FFFFFF 46%, #EBEFF2 54%, #FFFFFF 66%, #9AA3AF 80%, #4B515A 100%)',
+      } as React.CSSProperties}>
       <div className="space-y-1">
         <p className="text-xs text-zinc-400 font-semibold">Identidade</p>
         <h2 className="text-xl font-display italic text-white font-medium">Configurações do Site</h2>

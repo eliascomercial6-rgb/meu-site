@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Globe, ArrowLeft, KeyRound, Sparkles } from 'lucide-react';
+import { Globe, ArrowLeft, KeyRound, Sparkles, Images, BarChart3 } from 'lucide-react';
 
 interface LoginProps {
   initialMode?: 'login' | 'signup';
@@ -201,7 +201,28 @@ export default function Login({ initialMode = 'login', onLoginSuccess, onNavigat
   };
 
   return (
-    <div className="min-h-screen bg-[#050506] text-neutral-100 font-sans relative overflow-hidden lg:grid lg:grid-cols-2">
+    <div
+      className="min-h-screen bg-[#050506] text-neutral-100 font-sans relative overflow-hidden lg:grid lg:grid-cols-2"
+      style={{
+        // Same exact silver tokens as SaaSLandingPage's root override —
+        // without this, .app-btn-accent and every var(--app-accent-gradient)
+        // reference here fall back to whatever index.css defines globally,
+        // which is a visibly different (duller) silver than the landing.
+        '--app-accent': '#DCE3EA',
+        '--app-accent-dim': '#9AA3AF',
+        '--app-accent-rgb': '220,227,234',
+        '--app-accent-ink': '#0B0D10',
+        '--app-accent-gradient': 'linear-gradient(120deg, #2A2E34 0%, #7B8492 18%, #C3C9D1 34%, #FFFFFF 46%, #EBEFF2 54%, #FFFFFF 66%, #9AA3AF 80%, #4B515A 100%)',
+      } as React.CSSProperties}
+    >
+      <style>{`
+        @keyframes gentleFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-6px); } }
+        @keyframes gentleFloatReverse { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(6px); } }
+        .login-scroll::-webkit-scrollbar { width: 5px; }
+        .login-scroll::-webkit-scrollbar-track { background: transparent; }
+        .login-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); border-radius: 999px; }
+        .login-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
+      `}</style>
       {/* Ambient lighting — two light masses at opposite corners (top-left /
           bottom-right) instead of one centered glow: reads more like a real
           studio setup with light falling in from a corner, and gives the
@@ -210,44 +231,55 @@ export default function Login({ initialMode = 'login', onLoginSuccess, onNavigat
       <div className="absolute inset-0 pointer-events-none">
         <div
           className="absolute -top-[22%] -left-[16%] w-[640px] h-[640px] rounded-full blur-[150px] mix-blend-screen"
-          style={{ background: 'radial-gradient(circle, rgba(214,220,228,0.16) 0%, rgba(120,128,140,0.08) 45%, transparent 72%)' }}
+          style={{ background: 'radial-gradient(circle, rgba(214,220,228,0.07) 0%, rgba(120,128,140,0.035) 45%, transparent 72%)' }}
         />
         <div
-          className="absolute -top-[10%] -left-[4%] w-[360px] h-[360px] rounded-full blur-[120px] mix-blend-screen opacity-90"
-          style={{ background: 'radial-gradient(circle, rgba(244,247,250,0.36) 0%, transparent 70%)' }}
+          className="absolute -top-[10%] -left-[4%] w-[360px] h-[360px] rounded-full blur-[120px] mix-blend-screen opacity-60"
+          style={{ background: 'radial-gradient(circle, rgba(244,247,250,0.16) 0%, transparent 70%)' }}
         />
         <div
-          className="absolute -bottom-[20%] -right-[12%] w-[460px] h-[460px] rounded-full blur-[130px] opacity-50"
+          className="absolute -bottom-[20%] -right-[12%] w-[460px] h-[460px] rounded-full blur-[130px] opacity-30"
           style={{ background: 'radial-gradient(circle, rgba(52,57,64,0.45) 0%, transparent 70%)' }}
         />
 
         {/* Chrome arcs — one glinting off the top-left corner, its mirror off
-            the bottom-right, echoing the light masses above instead of
-            converging into a centered ring. */}
-        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 1920 800" preserveAspectRatio="xMidYMid slice">
+            the bottom-right. Previous version used a very wide viewBox
+            (1920×800, a 2.4:1 aspect) with the arcs sitting right at x≈0 —
+            on any window less wide than that (basically all of them),
+            preserveAspectRatio="slice" scales up to cover the full height
+            and crops the left/right edges to compensate, which cut the
+            arcs out of frame entirely. This viewBox is closer to a real
+            window aspect, and the arcs sit well inset from every edge so
+            they survive that crop instead of living exactly where it cuts.
+            Opacity pulled back hard from the previous pass — that version
+            fixed the arcs being invisible, but overshot into a bright,
+            distracting streak instead of a quiet glint. */}
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
           <defs>
-            <linearGradient id="loginRingArcA" gradientUnits="userSpaceOnUse" x1="-260" y1="360" x2="300" y2="-260">
+            <linearGradient id="loginRingArcA" gradientUnits="userSpaceOnUse" x1="100" y1="560" x2="580" y2="80">
               <stop offset="0%" stopColor="#fff" stopOpacity="0" />
-              <stop offset="30%" stopColor="#e4e9ee" stopOpacity="0.5" />
-              <stop offset="60%" stopColor="#ffffff" stopOpacity="0.85" />
+              <stop offset="28%" stopColor="#e4e9ee" stopOpacity="0.22" />
+              <stop offset="58%" stopColor="#ffffff" stopOpacity="0.38" />
               <stop offset="100%" stopColor="#fff" stopOpacity="0" />
             </linearGradient>
-            <linearGradient id="loginRingArcB" gradientUnits="userSpaceOnUse" x1="2180" y1="440" x2="1620" y2="1060">
+            <linearGradient id="loginRingArcB" gradientUnits="userSpaceOnUse" x1="1500" y1="340" x2="1020" y2="820">
               <stop offset="0%" stopColor="#fff" stopOpacity="0" />
-              <stop offset="30%" stopColor="#e2e7ec" stopOpacity="0.45" />
-              <stop offset="60%" stopColor="#f8fafb" stopOpacity="0.75" />
+              <stop offset="28%" stopColor="#e2e7ec" stopOpacity="0.18" />
+              <stop offset="58%" stopColor="#f8fafb" stopOpacity="0.3" />
               <stop offset="100%" stopColor="#fff" stopOpacity="0" />
             </linearGradient>
           </defs>
-          {/* Top-left corner arc — circle centered just off-canvas up-left */}
-          <path d="M -260 360 A 520 520 0 0 1 300 -260" fill="none" stroke="url(#loginRingArcA)" strokeWidth="34" strokeLinecap="round" className="blur-[26px]" />
-          <path d="M -250 355 A 525 525 0 0 1 305 -265" fill="none" stroke="url(#loginRingArcA)" strokeWidth="11" strokeLinecap="round" className="blur-[5px]" />
-          {/* Bottom-right corner arc — mirrored, circle just off-canvas down-right */}
-          <path d="M 2180 440 A 520 520 0 0 1 1620 1060" fill="none" stroke="url(#loginRingArcB)" strokeWidth="30" strokeLinecap="round" className="blur-[24px]" />
-          <path d="M 2170 435 A 525 525 0 0 1 1615 1065" fill="none" stroke="url(#loginRingArcB)" strokeWidth="9" strokeLinecap="round" className="blur-[4px]" />
+          {/* Top-left corner arc */}
+          <path d="M 100 560 A 480 480 0 0 1 580 80" fill="none" stroke="url(#loginRingArcA)" strokeWidth="46" strokeLinecap="round" className="blur-[30px]" />
+          <path d="M 105 555 A 483 483 0 0 1 583 83" fill="none" stroke="url(#loginRingArcA)" strokeWidth="16" strokeLinecap="round" className="blur-[7px]" />
+          <path d="M 110 550 A 486 486 0 0 1 586 86" fill="none" stroke="url(#loginRingArcA)" strokeWidth="2" strokeLinecap="round" className="blur-[1px]" />
+          {/* Bottom-right corner arc — mirrored */}
+          <path d="M 1500 340 A 480 480 0 0 1 1020 820" fill="none" stroke="url(#loginRingArcB)" strokeWidth="40" strokeLinecap="round" className="blur-[28px]" />
+          <path d="M 1495 345 A 483 483 0 0 1 1017 817" fill="none" stroke="url(#loginRingArcB)" strokeWidth="13" strokeLinecap="round" className="blur-[6px]" />
+          <path d="M 1490 350 A 486 486 0 0 1 1014 814" fill="none" stroke="url(#loginRingArcB)" strokeWidth="1.5" strokeLinecap="round" className="blur-[1px]" />
         </svg>
         <div
-          className="absolute inset-0 opacity-[0.04] mix-blend-overlay"
+          className="absolute inset-0 opacity-[0.025] mix-blend-overlay"
           style={{
             backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='ln'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23ln)'/%3E%3C/svg%3E\")",
           }}
@@ -256,10 +288,13 @@ export default function Login({ initialMode = 'login', onLoginSuccess, onNavigat
 
       {/* Left brand panel — desktop only, and sticky: if the right column's
           form content ever needs to scroll (a long error message, a small
-          viewport), this panel stays put instead of scrolling away with it. */}
-      <div className="hidden lg:flex lg:sticky lg:top-0 lg:h-screen relative flex-col justify-between p-14 xl:p-20 border-r border-white/5 overflow-hidden">
-        <img src="/focus-logo-metallic.png" alt="FocusPortfolio" className="h-6 w-auto shrink-0 object-contain relative z-10" loading="eager" />
-
+          viewport), this panel stays put instead of scrolling away with it.
+          overflow-y-auto is a safety net of its own: on short viewports the
+          content below would otherwise get silently clipped by lg:h-screen
+          with no way to reach it, which is exactly the "missing info"
+          problem — this lets it scroll internally instead if it ever
+          needs to. */}
+      <div className="hidden lg:flex lg:sticky lg:top-0 lg:h-screen relative flex-col justify-center gap-10 p-14 xl:p-20 border-r border-white/5 overflow-y-auto">
         <div className="relative z-10 max-w-md">
           <h2 className="leading-[1.08] tracking-tight mb-6">
             <span className="block text-4xl xl:text-[2.75rem] font-sans font-extrabold text-white tracking-tighter">Sua marca merece</span>
@@ -270,7 +305,31 @@ export default function Login({ initialMode = 'login', onLoginSuccess, onNavigat
           </p>
         </div>
 
-        <div className="relative z-10 h-1" />
+        {/* Same floating glass-badge pattern as the "Veja a Plataforma em
+            Ação" card on the landing page — small glass chips with a very
+            subtle up/down sway (gentleFloat/gentleFloatReverse, staggered
+            per badge) instead of a plain bulleted list. flex-nowrap (not
+            flex-wrap) so the three badges always sit in one row and shrink
+            to fit instead of stacking into a column on narrower panels —
+            that stacking was the actual bug, not a deliberate layout. */}
+        <div className="relative z-10 flex flex-nowrap gap-2.5 max-w-md">
+          {[
+            { icon: Globe, label: 'Domínio e identidade visual próprios', anim: 'gentleFloat 5s ease-in-out infinite', delay: '0s' },
+            { icon: Images, label: 'Curadoria de galerias ilimitada', anim: 'gentleFloatReverse 5s ease-in-out infinite', delay: '0.4s' },
+            { icon: BarChart3, label: 'Estatísticas de visitas em tempo real', anim: 'gentleFloat 5s ease-in-out infinite', delay: '0.8s' },
+          ].map(({ icon: Icon, label, anim, delay }) => (
+            <div
+              key={label}
+              className="flex-1 min-w-0 flex flex-col items-start gap-2 px-3 py-2.5 rounded-xl glass-card shadow-lg opacity-90"
+              style={{ animation: anim, animationDelay: delay }}
+            >
+              <div className="w-6 h-6 rounded-lg bg-[var(--app-accent)]/10 flex items-center justify-center shrink-0">
+                <Icon className="w-3 h-3 text-[var(--app-accent)]" />
+              </div>
+              <p className="text-[10px] font-medium text-white/80 leading-snug">{label}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Right column — the auth card itself. Scrolls independently from the
@@ -278,24 +337,30 @@ export default function Login({ initialMode = 'login', onLoginSuccess, onNavigat
           ambient light behind it still shows through instead of sitting on
           a flat black block. */}
       <div className="flex flex-col items-center justify-center lg:justify-start p-6 relative lg:h-screen lg:overflow-y-auto">
-      <div className="w-full max-w-md rounded-3xl border border-white/[0.06] bg-white/[0.025] p-8 md:p-10 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8)] backdrop-blur-2xl relative overflow-hidden animate-fade-in my-10">
-        {/* Top edge sheen — a thin metallic highlight along the card's top
-            border, the same quiet "brushed aluminum" cue used on cards
-            throughout the landing page. */}
-        <div className="absolute top-0 inset-x-0 h-px bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.35)_50%,transparent_100%)]" />
+      <div className="w-full max-w-md max-h-[92vh] rounded-3xl border border-white/[0.06] bg-white/[0.025] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8)] backdrop-blur-2xl relative overflow-hidden animate-fade-in my-10">
+        {/* Top edge sheen — lives on the outer shell (not the scrolling
+            inner div) so it stays put at the very top of the card instead
+            of scrolling away with the content. */}
+        <div className="absolute top-0 inset-x-0 h-px bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.35)_50%,transparent_100%)] z-10" />
+        {/* Scroll actually happens in here, inset from the shell's own
+            padding — the shell above clips to the rounded corners
+            (overflow-hidden), so the scrollbar can never visually poke
+            past the curve the way it did when the scrolling div and the
+            rounded border were the same element. */}
+        <div className="login-scroll max-h-[92vh] overflow-y-auto p-6 md:p-8">
         {/* Brand Header — no boxed icon badge; the eyebrow + wordmark carry
             the identity instead of a bordered square container. */}
-        <div className="flex flex-col items-center text-center mb-9 relative">
-          <img src="/focus-mark.png" alt="" className="lg:hidden w-8 h-8 object-contain shrink-0 mb-5 opacity-90" />
+        <div className="flex flex-col items-center text-center mb-6 relative">
+          <img src="/focus-mark.png" alt="FocusPortfolio" className="w-7 h-7 object-contain shrink-0 mb-3.5 opacity-90" />
           <h1 className="leading-tight">
-            <span className="font-sans font-extrabold text-white tracking-tighter text-2xl">
+            <span className="font-sans font-extrabold text-white tracking-tighter text-xl">
               {mode === 'login' ? 'Entrar no ' : mode === 'signup' ? 'Criar Meu ' : 'Recuperar '}
             </span>
-            <span className="font-display italic font-light text-2xl bg-[image:var(--app-accent-gradient)] bg-clip-text text-transparent">
+            <span className="font-display italic font-light text-xl bg-[image:var(--app-accent-gradient)] bg-clip-text text-transparent">
               {mode === 'login' ? 'Painel' : mode === 'signup' ? 'Portfólio' : 'Senha'}
             </span>
           </h1>
-          <p className={`text-xs text-neutral-400 mt-2.5 font-light ${mode === 'login' ? 'sm:whitespace-nowrap' : 'max-w-[300px]'}`}>
+          <p className={`text-xs text-neutral-400 mt-2 font-light ${mode === 'login' ? 'sm:whitespace-nowrap' : 'max-w-[300px]'}`}>
             {mode === 'login' 
               ? 'Acesse e gerencie suas obras com curadoria autoral.' 
               : mode === 'signup' 
@@ -306,7 +371,7 @@ export default function Login({ initialMode = 'login', onLoginSuccess, onNavigat
 
         {/* Dynamic Mode Switcher Bar */}
         {mode !== 'forgot' && (
-          <div className="flex rounded-xl bg-black border border-white/5 p-1 mb-6">
+          <div className="flex rounded-xl bg-black border border-white/5 p-1 mb-5">
             <button
               type="button"
               onClick={() => { setMode('login'); setErrorMsg(''); setSuccessMsg(''); }}
@@ -338,9 +403,9 @@ export default function Login({ initialMode = 'login', onLoginSuccess, onNavigat
 
         {/* Mode Forms */}
         {mode === 'login' && (
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-3.5">
             <div>
-              <label className="block text-xs text-neutral-400 mb-2 font-medium">E-mail</label>
+              <label className="block text-xs text-neutral-400 mb-1.5 font-medium">E-mail</label>
               <input 
                 type="email" 
                 autoComplete="email"
@@ -348,7 +413,7 @@ export default function Login({ initialMode = 'login', onLoginSuccess, onNavigat
                 onChange={(e) => setEmail(e.target.value)}
                 required 
                 placeholder="seu@email.com"
-                className="w-full px-4 py-3 rounded-xl bg-black border border-white/5 text-neutral-200 text-sm outline-none focus:border-[var(--app-accent)] focus:ring-1 focus:ring-[var(--app-accent)]/10 transition-all duration-200"
+                className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/5 text-neutral-200 text-sm outline-none focus:border-[var(--app-accent)] focus:ring-1 focus:ring-[var(--app-accent)]/10 transition-all duration-200"
               />
             </div>
 
@@ -370,7 +435,7 @@ export default function Login({ initialMode = 'login', onLoginSuccess, onNavigat
                 onChange={(e) => setPassword(e.target.value)}
                 required 
                 placeholder="Sua senha"
-                className="w-full px-4 py-3 rounded-xl bg-black border border-white/5 text-neutral-200 text-sm outline-none focus:border-[var(--app-accent)] focus:ring-1 focus:ring-[var(--app-accent)]/10 transition-all duration-200"
+                className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/5 text-neutral-200 text-sm outline-none focus:border-[var(--app-accent)] focus:ring-1 focus:ring-[var(--app-accent)]/10 transition-all duration-200"
               />
             </div>
 
@@ -387,7 +452,7 @@ export default function Login({ initialMode = 'login', onLoginSuccess, onNavigat
             <button 
               type="submit" 
               disabled={submitting}
-              className="w-full mt-2 py-4 rounded-xl text-xs font-semibold app-btn-accent active:scale-95 shadow-[0_8px_30px_-8px_rgba(var(--app-accent-rgb),0.55)] hover:shadow-[0_10px_36px_-6px_rgba(var(--app-accent-rgb),0.7)] transition-all duration-200 disabled:opacity-50 cursor-pointer"
+              className="w-full mt-1.5 py-3.5 rounded-xl text-xs font-semibold app-btn-accent active:scale-95 shadow-[0_8px_30px_-8px_rgba(var(--app-accent-rgb),0.55)] hover:shadow-[0_10px_36px_-6px_rgba(var(--app-accent-rgb),0.7)] transition-all duration-200 disabled:opacity-50 cursor-pointer"
             >
               {submitting ? 'Entrando...' : 'Entrar no Painel'}
             </button>
@@ -395,21 +460,21 @@ export default function Login({ initialMode = 'login', onLoginSuccess, onNavigat
         )}
 
         {mode === 'signup' && (
-          <form onSubmit={handleSignUp} className="space-y-4">
+          <form onSubmit={handleSignUp} className="space-y-3.5">
             <div>
-              <label className="block text-xs text-neutral-400 mb-2 font-medium">Nome Completo</label>
+              <label className="block text-xs text-neutral-400 mb-1.5 font-medium">Nome Completo</label>
               <input 
                 type="text" 
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required 
                 placeholder="Ex: Marina Duarte"
-                className="w-full px-4 py-3 rounded-xl bg-black border border-white/5 text-neutral-200 text-sm outline-none focus:border-[var(--app-accent)] focus:ring-1 focus:ring-[var(--app-accent)]/10 transition-all duration-200"
+                className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/5 text-neutral-200 text-sm outline-none focus:border-[var(--app-accent)] focus:ring-1 focus:ring-[var(--app-accent)]/10 transition-all duration-200"
               />
             </div>
 
             <div>
-              <label className="block text-xs text-neutral-400 mb-2 font-medium">Link Personalizado do Portfólio</label>
+              <label className="block text-xs text-neutral-400 mb-1.5 font-medium">Link Personalizado do Portfólio</label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500 text-xs font-medium">focusportfolio.com/p/</span>
                 <input 
@@ -418,7 +483,7 @@ export default function Login({ initialMode = 'login', onLoginSuccess, onNavigat
                   onChange={(e) => setPortfolioSlug(e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''))}
                   required 
                   placeholder="marina-duarte"
-                  className="w-full pl-36 pr-4 py-3 rounded-xl bg-black border border-white/5 text-neutral-200 text-xs outline-none focus:border-[var(--app-accent)] transition-all"
+                  className="w-full pl-36 pr-4 py-2.5 rounded-xl bg-black border border-white/5 text-neutral-200 text-xs outline-none focus:border-[var(--app-accent)] transition-all"
                 />
               </div>
               <p className="text-[10px] text-zinc-500 mt-1.5 flex items-center gap-1">
@@ -427,33 +492,33 @@ export default function Login({ initialMode = 'login', onLoginSuccess, onNavigat
             </div>
 
             <div>
-              <label className="block text-xs text-neutral-400 mb-2 font-medium">E-mail Profissional</label>
+              <label className="block text-xs text-neutral-400 mb-1.5 font-medium">E-mail Profissional</label>
               <input 
                 type="email" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required 
                 placeholder="seu@email.com"
-                className="w-full px-4 py-3 rounded-xl bg-black border border-white/5 text-neutral-200 text-sm outline-none focus:border-[var(--app-accent)] focus:ring-1 focus:ring-[var(--app-accent)]/10 transition-all duration-200"
+                className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/5 text-neutral-200 text-sm outline-none focus:border-[var(--app-accent)] focus:ring-1 focus:ring-[var(--app-accent)]/10 transition-all duration-200"
               />
             </div>
 
             <div>
-              <label className="block text-xs text-neutral-400 mb-2 font-medium">Senha de Acesso</label>
+              <label className="block text-xs text-neutral-400 mb-1.5 font-medium">Senha de Acesso</label>
               <input 
                 type="password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required 
                 placeholder="Mínimo 6 caracteres"
-                className="w-full px-4 py-3 rounded-xl bg-black border border-white/5 text-neutral-200 text-sm outline-none focus:border-[var(--app-accent)] focus:ring-1 focus:ring-[var(--app-accent)]/10 transition-all duration-200"
+                className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/5 text-neutral-200 text-sm outline-none focus:border-[var(--app-accent)] focus:ring-1 focus:ring-[var(--app-accent)]/10 transition-all duration-200"
               />
             </div>
 
             <button 
               type="submit" 
               disabled={submitting}
-              className="w-full mt-2 py-4 rounded-xl text-xs font-semibold app-btn-accent active:scale-95 shadow-[0_8px_30px_-8px_rgba(var(--app-accent-rgb),0.55)] hover:shadow-[0_10px_36px_-6px_rgba(var(--app-accent-rgb),0.7)] transition-all duration-200 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+              className="w-full mt-1.5 py-3.5 rounded-xl text-xs font-semibold app-btn-accent active:scale-95 shadow-[0_8px_30px_-8px_rgba(var(--app-accent-rgb),0.55)] hover:shadow-[0_10px_36px_-6px_rgba(var(--app-accent-rgb),0.7)] transition-all duration-200 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
             >
               <Sparkles className="w-4 h-4" />
               {submitting ? 'Criando Portfólio...' : 'Criar Meu Portfólio (14 dias Grátis)'}
@@ -462,23 +527,23 @@ export default function Login({ initialMode = 'login', onLoginSuccess, onNavigat
         )}
 
         {mode === 'forgot' && (
-          <form onSubmit={handleForgotPassword} className="space-y-4">
+          <form onSubmit={handleForgotPassword} className="space-y-3.5">
             <div>
-              <label className="block text-xs text-neutral-400 mb-2 font-medium">Seu E-mail Cadastrado</label>
+              <label className="block text-xs text-neutral-400 mb-1.5 font-medium">Seu E-mail Cadastrado</label>
               <input 
                 type="email" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required 
                 placeholder="seu@email.com"
-                className="w-full px-4 py-3 rounded-xl bg-black border border-white/5 text-neutral-200 text-sm outline-none focus:border-[var(--app-accent)] focus:ring-1 focus:ring-[var(--app-accent)]/10 transition-all duration-200"
+                className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/5 text-neutral-200 text-sm outline-none focus:border-[var(--app-accent)] focus:ring-1 focus:ring-[var(--app-accent)]/10 transition-all duration-200"
               />
             </div>
 
             <button 
               type="submit" 
               disabled={submitting}
-              className="w-full py-4 rounded-xl text-xs font-semibold app-btn-accent active:scale-95 shadow-[0_8px_30px_-8px_rgba(var(--app-accent-rgb),0.55)] hover:shadow-[0_10px_36px_-6px_rgba(var(--app-accent-rgb),0.7)] transition-all duration-200 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+              className="w-full py-3.5 rounded-xl text-xs font-semibold app-btn-accent active:scale-95 shadow-[0_8px_30px_-8px_rgba(var(--app-accent-rgb),0.55)] hover:shadow-[0_10px_36px_-6px_rgba(var(--app-accent-rgb),0.7)] transition-all duration-200 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
             >
               <KeyRound className="w-4 h-4" />
               {submitting ? 'Enviando...' : 'Enviar Link de Redefinição'}
@@ -495,7 +560,7 @@ export default function Login({ initialMode = 'login', onLoginSuccess, onNavigat
         )}
 
         {/* Footer actions */}
-        <div className="mt-8 pt-6 border-t border-zinc-900 flex justify-between items-center text-xs text-neutral-500 font-sans">
+        <div className="mt-6 pt-5 border-t border-zinc-900 flex justify-between items-center text-xs text-neutral-500 font-sans">
           <button onClick={onNavigateHome} className="hover:text-neutral-300 flex items-center gap-1">
             <ArrowLeft className="w-3.5 h-3.5" /> Voltar à home
           </button>
@@ -517,6 +582,7 @@ export default function Login({ initialMode = 'login', onLoginSuccess, onNavigat
               Já possuo conta
             </button>
           )}
+        </div>
         </div>
       </div>
       </div>

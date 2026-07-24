@@ -486,7 +486,17 @@ export default function FotosTab({ userId, onShowToast }: FotosTabProps) {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in relative">
+    <div className="space-y-6 animate-fade-in relative" style={{
+        // Same silver tokens as SaaSLandingPage/Login — without this the
+        // admin panel's buttons/borders/gradients fall back to whatever
+        // index.css defines globally, which reads as a duller/different
+        // silver than the rest of the product.
+        '--app-accent': '#DCE3EA',
+        '--app-accent-dim': '#9AA3AF',
+        '--app-accent-rgb': '220,227,234',
+        '--app-accent-ink': '#0B0D10',
+        '--app-accent-gradient': 'linear-gradient(120deg, #2A2E34 0%, #7B8492 18%, #C3C9D1 34%, #FFFFFF 46%, #EBEFF2 54%, #FFFFFF 66%, #9AA3AF 80%, #4B515A 100%)',
+      } as React.CSSProperties}>
       {/* Header and triggers */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         {/* Toggle filters */}

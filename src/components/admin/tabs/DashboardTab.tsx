@@ -194,7 +194,17 @@ export default function DashboardTab({ userId, photographerName, onTabChange }: 
   }
 
   return (
-    <div className="space-y-8 animate-fade-in text-neutral-200">
+    <div className="space-y-8 animate-fade-in text-neutral-200" style={{
+        // Same silver tokens as SaaSLandingPage/Login — without this the
+        // admin panel's buttons/borders/gradients fall back to whatever
+        // index.css defines globally, which reads as a duller/different
+        // silver than the rest of the product.
+        '--app-accent': '#DCE3EA',
+        '--app-accent-dim': '#9AA3AF',
+        '--app-accent-rgb': '220,227,234',
+        '--app-accent-ink': '#0B0D10',
+        '--app-accent-gradient': 'linear-gradient(120deg, #2A2E34 0%, #7B8492 18%, #C3C9D1 34%, #FFFFFF 46%, #EBEFF2 54%, #FFFFFF 66%, #9AA3AF 80%, #4B515A 100%)',
+      } as React.CSSProperties}>
       {/* Welcome — open editorial header instead of a boxed card. A stacked
           pile of bordered panels reads as a template; a page with one clear
           point of entry reads as a product. */}
@@ -277,14 +287,14 @@ export default function DashboardTab({ userId, photographerName, onTabChange }: 
             className="sm:col-span-2 lg:col-span-2 chrome-hairline-top chrome-card-hover text-left p-6 rounded-3xl border border-white/10 bg-white/[0.02] hover:border-[var(--app-accent)]/30 hover:bg-white/[0.03] transition-all duration-300 group relative overflow-hidden cursor-pointer flex flex-col justify-between min-h-[176px]"
           >
             <div className="flex items-start justify-between">
-              <div className="w-11 h-11 rounded-2xl bg-white/5 flex items-center justify-center text-zinc-300 group-hover:text-[var(--app-accent)] transition-colors">
+              <div className="w-11 h-11 rounded-2xl bg-[var(--app-accent)]/10 flex items-center justify-center text-[var(--app-accent)] group-hover:scale-105 transition-transform">
                 <Camera className="w-5 h-5" />
               </div>
               <ArrowUpRight className="w-4 h-4 text-neutral-600 group-hover:text-[var(--app-accent)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
             </div>
             <div>
               <p className="font-display italic text-5xl text-white font-semibold leading-none mb-2">{photosCount}</p>
-              <p className="text-xs font-sans uppercase tracking-wider text-neutral-500">Fotos no acervo</p>
+              <p className="text-xs font-sans uppercase tracking-wider text-neutral-500 group-hover:text-neutral-300 transition-colors">Fotos no acervo</p>
               <p className="text-[11px] text-neutral-600 group-hover:text-neutral-400 transition-colors mt-2">Carregar novas imagens →</p>
             </div>
           </button>
@@ -295,14 +305,14 @@ export default function DashboardTab({ userId, photographerName, onTabChange }: 
             className="chrome-hairline-top chrome-card-hover text-left p-6 rounded-3xl border border-white/10 bg-white/[0.02] hover:border-[var(--app-accent)]/30 hover:bg-white/[0.03] transition-all duration-300 group relative overflow-hidden cursor-pointer flex flex-col justify-between min-h-[176px]"
           >
             <div className="flex items-start justify-between">
-              <div className="w-11 h-11 rounded-2xl bg-white/5 flex items-center justify-center text-zinc-300 group-hover:text-[var(--app-accent)] transition-colors">
+              <div className="w-11 h-11 rounded-2xl bg-[var(--app-accent)]/10 flex items-center justify-center text-[var(--app-accent)] group-hover:scale-105 transition-transform">
                 <FolderHeart className="w-5 h-5" />
               </div>
               <ArrowUpRight className="w-4 h-4 text-neutral-600 group-hover:text-[var(--app-accent)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
             </div>
             <div>
               <p className="font-display italic text-4xl text-white font-semibold leading-none mb-2">{publishedAlbumsCount}</p>
-              <p className="text-xs font-sans uppercase tracking-wider text-neutral-500">de {albums.length} álbuns publicados</p>
+              <p className="text-xs font-sans uppercase tracking-wider text-neutral-500 group-hover:text-neutral-300 transition-colors">de {albums.length} álbuns publicados</p>
             </div>
           </button>
 
@@ -312,14 +322,14 @@ export default function DashboardTab({ userId, photographerName, onTabChange }: 
             className="chrome-hairline-top chrome-card-hover text-left p-6 rounded-3xl border border-white/10 bg-white/[0.02] hover:border-[var(--app-accent)]/30 hover:bg-white/[0.03] transition-all duration-300 group relative overflow-hidden cursor-pointer flex flex-col justify-between min-h-[176px]"
           >
             <div className="flex items-start justify-between">
-              <div className="w-11 h-11 rounded-2xl bg-white/5 flex items-center justify-center text-zinc-300 group-hover:text-[var(--app-accent)] transition-colors">
+              <div className="w-11 h-11 rounded-2xl bg-[var(--app-accent)]/10 flex items-center justify-center text-[var(--app-accent)] group-hover:scale-105 transition-transform">
                 <Tags className="w-5 h-5" />
               </div>
               <ArrowUpRight className="w-4 h-4 text-neutral-600 group-hover:text-[var(--app-accent)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
             </div>
             <div>
               <p className="font-display italic text-4xl text-white font-semibold leading-none mb-2">{categoriesServed}</p>
-              <p className="text-xs font-sans uppercase tracking-wider text-neutral-500">nichos ativos — definir mais →</p>
+              <p className="text-xs font-sans uppercase tracking-wider text-neutral-500 group-hover:text-[var(--app-accent)] transition-colors whitespace-nowrap">nichos ativos</p>
             </div>
           </button>
 
@@ -351,11 +361,11 @@ export default function DashboardTab({ userId, photographerName, onTabChange }: 
             className="sm:col-span-2 lg:col-span-2 chrome-hairline-top chrome-card-hover text-left p-6 rounded-3xl border border-white/10 bg-white/[0.02] hover:border-[var(--app-accent)]/30 hover:bg-white/[0.03] transition-all duration-300 group relative overflow-hidden cursor-pointer flex items-center justify-between gap-4 min-h-[176px]"
           >
             <div>
-              <div className="w-11 h-11 rounded-2xl bg-white/5 flex items-center justify-center text-zinc-300 group-hover:text-[var(--app-accent)] transition-colors mb-4">
+              <div className="w-11 h-11 rounded-2xl bg-[var(--app-accent)]/10 flex items-center justify-center text-[var(--app-accent)] group-hover:scale-105 transition-transform mb-4">
                 <Sparkles className="w-5 h-5" />
               </div>
               <p className="text-sm font-semibold text-white mb-1">Editar Minha Bio</p>
-              <p className="text-[11px] text-neutral-500">Equipamentos, especialidades e história pessoal</p>
+              <p className="text-[11px] text-neutral-500 group-hover:text-neutral-400 transition-colors">Equipamentos, especialidades e história pessoal</p>
             </div>
             <ArrowUpRight className="w-5 h-5 text-neutral-600 group-hover:text-[var(--app-accent)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0" />
           </button>
